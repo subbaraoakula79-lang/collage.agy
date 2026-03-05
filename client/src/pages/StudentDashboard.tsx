@@ -32,6 +32,18 @@ export default function StudentDashboard() {
 
     useEffect(() => { loadData(); }, []);
 
+    useEffect(() => {
+        if (printAllotment && profile) {
+            const timer = setTimeout(() => window.print(), 500); // Wait for React to paint
+            const afterPrint = () => setPrintAllotment(null);
+            window.addEventListener('afterprint', afterPrint);
+            return () => {
+                clearTimeout(timer);
+                window.removeEventListener('afterprint', afterPrint);
+            };
+        }
+    }, [printAllotment, profile]);
+
     const loadData = async () => {
         try {
             const { data } = await api.get('/student/onboarding-status');
@@ -142,7 +154,6 @@ export default function StudentDashboard() {
 
     const handlePrintApplication = (allotment: any) => {
         setPrintAllotment(allotment);
-        setTimeout(() => window.print(), 100);
     };
 
     const logout = () => { setUser(null); nav('/'); };
