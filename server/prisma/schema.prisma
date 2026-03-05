@@ -1,0 +1,315 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  name          String
+  email         String   @unique
+  password      String
+  role          String   @default("STUDENT") // STUDENT, FACULTY, ADMIN
+  phone         String?
+  isVerified    Boolean  @default(false)
+  otp           String?
+  otpExpiresAt  DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  student       StudentProfile?
+  faculty       FacultyProfile?
+  chatHistory   ChatHistory[]
+  auditLogs     AuditLog[]
+  notifications Notification[]
+}
+
+model StudentProfile {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id])
+  aadhaarEncrypted String?
+  aadhaarHash     String?  @unique
+  category        String   @default("GENERAL") // GENERAL, OBC, SC, ST, EWS
+  dateOfBirth     String?
+  gender          String?  // MALE, FEMALE, OTHER
+  state           String   @default("Andhra Pradesh")
+
+  // Detailed Address
+  houseNo         String?
+  street          String?
+  village         String?
+  mandal          String?
+  district        String?
+  pincode         String?
+  address         String?  // full address (legacy / computed)
+  corrAddress     String?  // correspondence address (if different)
+
+  // Parent / Guardian Details
+  fatherName      String?
+  motherName      String?
+  guardianName    String?
+  parentMobile    String?
+  parentOccupation String?
+  annualIncome    Float?
+
+  // Category Extensions
+  minority        Boolean  @default(false)
+  physicallyHandicapped Boolean @default(false)
+  sportsQuota     Boolean  @default(false)
+
+  // Onboarding wizard tracking
+  admissionType   String?  // UG, PG, ENGINEERING, DIPLOMA — set during onboarding
+  onboardingStep  String   @default("REGISTERED") // REGISTERED, TYPE_SELECTED, DIGILOCKER_DONE, DOCS_SUBMITTED, COURSES_SELECTED, COMPLETE
+
+  // SSC Academic Details
+  sscHallTicket   String?
+  sscBoard        String?  // e.g. "AP Board of SSC"
+  sscYearOfPassing String?
+  sscMarks        Float?
+  sscTotal        Float?
+  sscPercentage   Float?
+  sscGrade        String?
+
+  // Inter Academic Details
+  interHallTicket String?
+  interBoard      String?
+  interGroup      String?  // MPC, BiPC, MEC, CEC, etc.
+  interYearOfPassing String?
+  interMarks      Float?
+  interTotal      Float?
+  interPercentage Float?
+
+  // UG Academic Details (for PG admissions)
+  ugMarks         Float?
+  ugTotal         Float?
+  ugPercentage    Float?
+
+  // Document URLs
+  sscCertUrl      String?
+  interCertUrl    String?
+  ugCertUrl       String?
+  casteCertUrl    String?
+  incomeCertUrl   String?
+  disabilityCertUrl String?
+  sportsCertUrl   String?
+
+  // Document submission status: AUTO_FETCHED, MANUAL, NOT_SUBMITTED
+  sscDocStatus    String   @default("NOT_SUBMITTED")
+  interDocStatus  String   @default("NOT_SUBMITTED")
+  ugDocStatus     String   @default("NOT_SUBMITTED")
+  casteDocStatus  String   @default("NOT_SUBMITTED")
+  incomeDocStatus String   @default("NOT_SUBMITTED")
+
+  digilockerToken String?
+  digilockerVerified Boolean @default(false)
+
+  applications    Application[]
+  allotments      Allotment[]
+  payments        Payment[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model FacultyProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  collegeId   String?
+  college     College? @relation(fields: [collegeId], references: [id])
+  department  String?
+  designation String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model College {
+  id          String   @id @default(uuid())
+  name        String
+  code        String   @unique
+  accessCode  String   @default("86390")
+  address     String?
+  state       String   @default("Andhra Pradesh")
+  city        String?
+  courses     Course[]
+  faculty     FacultyProfile[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Course {
+  id              String   @id @default(uuid())
+  name            String
+  code            String
+  collegeId       String
+  college         College  @relation(fields: [collegeId], references: [id])
+  admissionType   String   // UG, PG, ENGINEERING, DIPLOMA
+  admissionMode   String   @default("MERIT") // MERIT, DIRECT
+  totalSeats      Int
+  eligibilityPercentage Float @default(0)
+  tuitionFee      Float    @default(0)
+  labFee          Float    @default(0)
+  libraryFee      Float    @default(0)
+  otherFee        Float    @default(0)
+  totalFee        Float    @default(0)
+  installmentEnabled Boolean @default(false)
+  scholarshipEnabled Boolean @default(false)
+  unfilledSeatRule String  @default("CONVERT_TO_GENERAL") // CONVERT_TO_GENERAL, CARRY_FORWARD
+  isActive        Boolean  @default(true)
+
+  reservations    ReservationMatrix[]
+  applications    Application[]
+  allotments      Allotment[]
+  rounds          Round[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model ReservationMatrix {
+  id          String @id @default(uuid())
+  courseId    String
+  course      Course @relation(fields: [courseId], references: [id])
+  category    String // GENERAL, OBC, SC, ST, EWS
+  percentage  Float
+  seats       Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([courseId, category])
+}
+
+model Application {
+  id            String   @id @default(uuid())
+  studentId     String
+  student       StudentProfile @relation(fields: [studentId], references: [id])
+  courseId       String
+  course        Course   @relation(fields: [courseId], references: [id])
+  admissionType String
+  status        String   @default("PENDING") // PENDING, ELIGIBLE, INELIGIBLE, ALLOTTED, ACCEPTED, FROZEN, REJECTED, WAITLISTED
+  appliedMarks  Float?
+  preference    Int      @default(1)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([studentId, courseId])
+}
+
+model Round {
+  id          String   @id @default(uuid())
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id])
+  roundNumber Int
+  status      String   @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED
+  isPublished Boolean  @default(false)
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  allotments  Allotment[]
+
+  @@unique([courseId, roundNumber])
+}
+
+model Allotment {
+  id          String   @id @default(uuid())
+  studentId   String
+  student     StudentProfile @relation(fields: [studentId], references: [id])
+  courseId     String
+  course      Course   @relation(fields: [courseId], references: [id])
+  roundId     String
+  round       Round    @relation(fields: [roundId], references: [id])
+  category    String
+  status      String   @default("ALLOTTED") // ALLOTTED, ACCEPTED, FROZEN, CANCELLED, UPGRADED
+  seatLocked  Boolean  @default(false)
+  seatLockedAt DateTime?
+  seatExpiresAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Payment {
+  id              String   @id @default(uuid())
+  studentId       String
+  student         StudentProfile @relation(fields: [studentId], references: [id])
+  allotmentId     String?
+  amount          Float
+  method          String?  // UPI, CARD, NET_BANKING
+  gateway         String   @default("RAZORPAY") // RAZORPAY, STRIPE
+  transactionId   String?
+  gatewayPaymentId String?
+  gatewaySignature String?
+  status          String   @default("PENDING") // PENDING, SUCCESS, FAILED, REFUNDED
+  isInstallment   Boolean  @default(false)
+  installmentNumber Int?
+  paidAt          DateTime?
+  receiptUrl      String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Refund {
+  id          String   @id @default(uuid())
+  paymentId   String
+  amount      Float
+  reason      String?
+  status      String   @default("PENDING") // PENDING, PROCESSED, FAILED
+  processedAt DateTime?
+  processedBy String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model DigiLockerSession {
+  id          String   @id @default(uuid())
+  userId      String
+  mobile      String
+  maskedName  String?
+  pinAttempts Int      @default(0)
+  pinVerified Boolean  @default(false)
+  otpSent     Boolean  @default(false)
+  otpVerified Boolean  @default(false)
+  token       String?
+  status      String   @default("INITIATED") // INITIATED, PIN_VERIFIED, OTP_SENT, VERIFIED, FAILED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ChatHistory {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  role      String   // user, assistant
+  message   String
+  provider  String?  // CHATGPT, GEMINI, GROK, MOCK
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String
+  entity    String
+  entityId  String?
+  details   String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  title     String
+  message   String
+  type      String   @default("INFO") // INFO, SUCCESS, WARNING, ALLOTMENT, PAYMENT
+  isRead    Boolean  @default(false)
+  link      String?  // optional deep-link within the app
+  createdAt DateTime @default(now())
+}
