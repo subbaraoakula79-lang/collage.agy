@@ -29,20 +29,21 @@ export default function StudentDashboard() {
     const [showNotifications, setShowNotifications] = useState(false);
     const [paymentAllotment, setPaymentAllotment] = useState<any>(null);
     const [printAllotment, setPrintAllotment] = useState<any>(null);
+    const [printApplication, setPrintApplication] = useState<boolean>(false);
 
     useEffect(() => { loadData(); }, []);
 
     useEffect(() => {
-        if (printAllotment && profile) {
+        if ((printAllotment || printApplication) && profile) {
             const timer = setTimeout(() => window.print(), 500); // Wait for React to paint
-            const afterPrint = () => setPrintAllotment(null);
+            const afterPrint = () => { setPrintAllotment(null); setPrintApplication(false); };
             window.addEventListener('afterprint', afterPrint);
             return () => {
                 clearTimeout(timer);
                 window.removeEventListener('afterprint', afterPrint);
             };
         }
-    }, [printAllotment, profile]);
+    }, [printAllotment, printApplication, profile]);
 
     const loadData = async () => {
         try {
@@ -463,7 +464,7 @@ export default function StudentDashboard() {
         <div className="app-layout">
             <nav className="navbar">
                 <div className="navbar-brand">
-                    <button className="btn btn-secondary btn-sm" onClick={() => setSidebarOpen(!sidebarOpen)} style={{ display: 'none' }}>☰</button>
+                    <button className="btn btn-secondary btn-sm menu-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>☰</button>
                     <div className="logo">🎓</div><span>NAP Student</span>
                 </div>
                 <div className="navbar-right">
@@ -476,6 +477,7 @@ export default function StudentDashboard() {
                 </div>
             </nav>
 
+            {sidebarOpen && <div className="sidebar-overlay open" onClick={() => setSidebarOpen(false)} />}
             <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
                 <div className="sidebar-section">Main Menu</div>
                 <ul className="sidebar-nav">
@@ -527,7 +529,15 @@ export default function StudentDashboard() {
 
                 {view === 'form' && (
                     <div className="animate-fade">
-                        <div className="page-header"><h1>📋 Application Form</h1><p>Auto-filled from DigiLocker verification</p></div>
+                        <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div>
+                                <h1 style={{ margin: 0 }}>📋 Application Form</h1>
+                                <p style={{ margin: '4px 0 0 0' }}>Auto-filled from DigiLocker verification</p>
+                            </div>
+                            <button className="btn btn-secondary" onClick={() => setPrintApplication(true)}>
+                                🖨️ Print Form
+                            </button>
+                        </div>
 
                         {/* Identity Section */}
                         <div className="card mb-lg">
@@ -839,6 +849,98 @@ export default function StudentDashboard() {
                             <div style={{ textAlign: 'center' }}>
                                 <div style={{ borderBottom: '1px solid black', width: '200px', height: '40px' }}></div>
                                 <div style={{ marginTop: '5px' }}>College Principal Seal</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Hidden Print Container for General Application */}
+            {printApplication && profile && (
+                <div className="print-only print-application-form">
+                    <div style={{ position: 'relative' }}>
+                        <div className="photo-box">
+                            {/* Mock passport size photo placeholder */}
+                            <div style={{ textAlign: 'center', color: '#888' }}>
+                                <div style={{ fontSize: '24pt', marginBottom: '10px' }}>📸</div>
+                                <div style={{ fontSize: '8pt' }}>Passport<br />Size Photo</div>
+                            </div>
+                        </div>
+
+                        <div className="print-header">
+                            <h1>Government of Andhra Pradesh</h1>
+                            <h2>National Admission Portal</h2>
+                            <p style={{ margin: '5px 0' }}>Student Application Form ({profile.admissionType})</p>
+                        </div>
+
+                        <div className="print-section">
+                            <div className="print-section-title">Student Details</div>
+                            <div className="print-grid-2">
+                                <span className="print-label">Full Name:</span> <span className="print-value">{profile.user?.name}</span>
+                                <span className="print-label">Date of Birth:</span> <span className="print-value">{profile.dateOfBirth || '—'}</span>
+                                <span className="print-label">Gender:</span> <span className="print-value">{profile.gender || '—'}</span>
+                                <span className="print-label">Email Address:</span> <span className="print-value">{profile.user?.email}</span>
+                                <span className="print-label">Mobile Number:</span> <span className="print-value">{profile.user?.phone || '—'}</span>
+                                <span className="print-label">Category:</span> <span className="print-value">{profile.category}</span>
+                            </div>
+                        </div>
+
+                        <div className="print-section">
+                            <div className="print-section-title">Parent / Guardian & Address</div>
+                            <div className="print-grid-2">
+                                <span className="print-label">Father's Name:</span> <span className="print-value">{profile.fatherName || '—'}</span>
+                                <span className="print-label">Mother's Name:</span> <span className="print-value">{profile.motherName || '—'}</span>
+                                <span className="print-label">Parent Mobile:</span> <span className="print-value">{profile.parentMobile || '—'}</span>
+                                <span className="print-label">Full Address:</span> <span className="print-value">{profile.address || '—'}</span>
+                            </div>
+                        </div>
+
+                        <div className="print-section">
+                            <div className="print-section-title">Academic Records</div>
+                            <table className="print-table">
+                                <thead>
+                                    <tr>
+                                        <th>Examination</th>
+                                        <th>Hall Ticket</th>
+                                        <th>Year</th>
+                                        <th>Marks Obtained</th>
+                                        <th>Percentage</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>SSC / 10th Class</td>
+                                        <td>{profile.sscHallTicket || '—'}</td>
+                                        <td>{profile.sscYearOfPassing || '—'}</td>
+                                        <td>{profile.sscMarks}/{profile.sscTotal}</td>
+                                        <td>{profile.sscPercentage}%</td>
+                                    </tr>
+                                    {(profile.admissionType === 'UG' || profile.admissionType === 'PG') && profile.interPercentage && (
+                                        <tr>
+                                            <td>Intermediate</td>
+                                            <td>{profile.interHallTicket || '—'}</td>
+                                            <td>{profile.interYearOfPassing || '—'}</td>
+                                            <td>{profile.interMarks}/{profile.interTotal}</td>
+                                            <td>{profile.interPercentage}%</td>
+                                        </tr>
+                                    )}
+                                    {profile.admissionType === 'PG' && profile.ugPercentage && (
+                                        <tr>
+                                            <td>UG Degree</td>
+                                            <td>—</td>
+                                            <td>—</td>
+                                            <td>{profile.ugMarks}/{profile.ugTotal}</td>
+                                            <td>{profile.ugPercentage}%</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div style={{ marginTop: '50px', display: 'flex', justifyContent: 'space-between', padding: '0 40px' }}>
+                            <div style={{ textAlign: 'center' }}>
+                                <div style={{ borderBottom: '1px solid black', width: '200px', height: '40px' }}></div>
+                                <div style={{ marginTop: '5px' }}>Student Signature</div>
                             </div>
                         </div>
                     </div>

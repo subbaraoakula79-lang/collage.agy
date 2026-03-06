@@ -1746,3 +1746,131 @@ tr:hover {
     grid-template-columns: 1fr;
   }
 }
+
+/* ===== PRINT STYLES ===== */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .print-only,
+  .print-only * {
+    visibility: visible;
+  }
+
+  .print-only {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 20px;
+    background: white;
+    color: black;
+  }
+
+  .print-application-form {
+    font-family: Arial, sans-serif;
+  }
+
+  .print-header {
+    text-align: center;
+    margin-bottom: 30px;
+    border-bottom: 2px solid #333;
+    padding-bottom: 15px;
+  }
+
+  .print-header h1 {
+    font-size: 24px;
+    margin: 0;
+  }
+
+  .print-header h2 {
+    font-size: 18px;
+    margin: 5px 0 0 0;
+  }
+
+  .print-section {
+    margin-bottom: 25px;
+  }
+
+  .print-section-title {
+    font-size: 16px;
+    font-weight: bold;
+    background-color: #f0f0f0;
+    padding: 5px 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+  }
+
+  .print-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    row-gap: 8px;
+    column-gap: 15px;
+  }
+
+  .print-label {
+    font-weight: bold;
+    color: #555;
+  }
+
+  .print-value {
+    color: #000;
+  }
+
+  .print-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+
+  .print-table th,
+  .print-table td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: left;
+  }
+
+  .print-table th {
+    background-color: #f9f9f9;
+    font-weight: bold;
+  }
+
+  .photo-box {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 120px;
+    height: 150px;
+    border: 1px solid #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+/* ===== MOBILE SIDEBAR TOGGLE & OVERLAY ===== */
+.menu-toggle {
+  display: none;
+}
+@media (max-width: 768px) {
+  .menu-toggle {
+    display: inline-flex;
+    margin-right: var(--space-sm);
+  }
+}
+
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 64px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 80;
+}
+.sidebar-overlay.open {
+  display: block;
+}

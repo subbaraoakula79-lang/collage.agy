@@ -26,8 +26,8 @@ export default function LandingPage() {
             {/* Hero */}
             <section className="hero">
                 <div className="hero-content">
-                    <div className="hero-badge">
-                        🇮🇳 AP Testing Phase — Completely Free
+                    <div className="badge badge-primary mb-lg animate-slide-up" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.3)' }}>
+                        🇮🇳 Completely Free
                     </div>
                     <h1>
                         Your Future Starts<br />
@@ -144,8 +144,9 @@ export default function LandingPage() {
             </section>
 
             {/* Footer */}
-            <footer className="footer">
-                <p>© {new Date().getFullYear()} National Admission Portal — Government of Andhra Pradesh (Testing Phase)</p>
+            <footer style={{ background: 'var(--bg-card)', padding: 'var(--space-2xl) var(--space-xl)', textAlign: 'center', borderTop: '1px solid var(--border)' }}>
+                <div className="logo mb-md" style={{ margin: '0 auto', width: 48, height: 48, background: 'var(--gradient-primary)', borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>🎓</div>
+                <p>© {new Date().getFullYear()} National Admission Portal — Government of Andhra Pradesh</p>
                 <p style={{ marginTop: '8px' }}>Made with ❤️ for Indian Students</p>
             </footer>
         </div>

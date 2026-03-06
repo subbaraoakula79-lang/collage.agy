@@ -7,6 +7,7 @@ export default function FacultyDashboard() {
     const { user, setUser, showToast, theme, toggleTheme } = useContext(AppContext);
     const nav = useNavigate();
     const [view, setView] = useState('dashboard');
+    const [sidebarOpen, setSidebarOpen] = useState(false);
     const [courses, setCourses] = useState<any[]>([]);
     const [profile, setProfile] = useState<any>(null);
     const [showForm, setShowForm] = useState(false);
@@ -161,7 +162,10 @@ export default function FacultyDashboard() {
     return (
         <div className="app-layout">
             <nav className="navbar">
-                <div className="navbar-brand"><div className="logo">🏫</div><span>NAP College Admin</span></div>
+                <div className="navbar-brand">
+                    <button className="btn btn-secondary btn-sm menu-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>☰</button>
+                    <div className="logo">🏫</div><span>NAP College Admin</span>
+                </div>
                 <div className="navbar-right">
                     <button className="btn btn-secondary btn-sm" onClick={toggleTheme} style={{ padding: '6px', marginRight: '8px' }}>
                         {theme === 'light' ? '🌙' : '☀️'}
@@ -171,12 +175,13 @@ export default function FacultyDashboard() {
                 </div>
             </nav>
 
-            <aside className="sidebar">
+            {sidebarOpen && <div className="sidebar-overlay open" onClick={() => setSidebarOpen(false)} />}
+            <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
                 <div className="sidebar-section">College Admin Panel</div>
                 <ul className="sidebar-nav">
                     {profile?.collegeId && menu.map(m => (
                         <li key={m.key} className="sidebar-item">
-                            <button className={`sidebar-link ${view === m.key ? 'active' : ''}`} onClick={() => setView(m.key)}>
+                            <button className={`sidebar-link ${view === m.key ? 'active' : ''}`} onClick={() => { setView(m.key); setSidebarOpen(false); }}>
                                 <span className="icon">{m.icon}</span>{m.label}
                             </button>
                         </li>

@@ -10,13 +10,11 @@ interface PaymentModalProps {
 export default function PaymentModal({ allotment, onSuccess, onClose }: PaymentModalProps) {
     const [step, setStep] = useState(1); // 1: Select, 2: Process, 3: Success
     const [method, setMethod] = useState('');
-    const [loading, setLoading] = useState(false);
     const [receiptInfo, setReceiptInfo] = useState<any>(null);
 
     const handlePayment = async (selectedMethod: string) => {
         setMethod(selectedMethod);
         setStep(2);
-        setLoading(true);
 
         try {
             // Step 1: Initiate
@@ -38,8 +36,6 @@ export default function PaymentModal({ allotment, onSuccess, onClose }: PaymentM
         } catch (err: any) {
             alert(err.response?.data?.error || 'Payment failed');
             setStep(1);
-        } finally {
-            setLoading(false);
         }
     };
 

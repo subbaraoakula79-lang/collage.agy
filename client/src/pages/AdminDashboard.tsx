@@ -7,6 +7,7 @@ export default function AdminDashboard() {
     const { user, setUser, showToast, theme, toggleTheme } = useContext(AppContext);
     const nav = useNavigate();
     const [view, setView] = useState('dashboard');
+    const [sidebarOpen, setSidebarOpen] = useState(false);
     const [stats, setStats] = useState<any>({});
     const [users, setUsers] = useState<any[]>([]);
     const [courses, setCourses] = useState<any[]>([]);
@@ -16,7 +17,6 @@ export default function AdminDashboard() {
     const [colleges, setColleges] = useState<any[]>([]);
     const [showCollegeForm, setShowCollegeForm] = useState(false);
     const [collegeForm, setCollegeForm] = useState({ name: '', code: '', accessCode: '86390', city: '', state: 'Andhra Pradesh' });
-    const [loading, setLoading] = useState(false);
     const [analytics, setAnalytics] = useState<any>(null);
     const [roundData, setRoundData] = useState<any>({ rounds: [], courses: [] });
     const [roundSchedule, setRoundSchedule] = useState({ courseId: '', startDate: '', endDate: '' });
@@ -135,7 +135,10 @@ export default function AdminDashboard() {
     return (
         <div className="app-layout">
             <nav className="navbar">
-                <div className="navbar-brand"><div className="logo">🎓</div><span>NAP Admin</span></div>
+                <div className="navbar-brand">
+                    <button className="btn btn-secondary btn-sm menu-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>☰</button>
+                    <div className="logo">🎓</div><span>NAP Admin</span>
+                </div>
                 <div className="navbar-right">
                     <button className="btn btn-secondary btn-sm" onClick={toggleTheme} style={{ padding: '6px', marginRight: '8px' }}>
                         {theme === 'light' ? '🌙' : '☀️'}
@@ -148,19 +151,20 @@ export default function AdminDashboard() {
                 </div>
             </nav>
 
-            <aside className="sidebar">
+            {sidebarOpen && <div className="sidebar-overlay open" onClick={() => setSidebarOpen(false)} />}
+            <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
                 <div className="sidebar-section">Admin Panel</div>
                 <ul className="sidebar-nav">
                     {menu.map(m => (
                         <li key={m.key} className="sidebar-item">
-                            <button className={`sidebar-link ${view === m.key ? 'active' : ''}`} onClick={() => setView(m.key)}>
+                            <button className={`sidebar-link ${view === m.key ? 'active' : ''}`} onClick={() => { setView(m.key); setSidebarOpen(false); }}>
                                 <span className="icon">{m.icon}</span>{m.label}
                             </button>
                         </li>
                     ))}
                 </ul>
                 <div className="sidebar-section">
-                    <button className="sidebar-link" onClick={logout}><span className="icon">🚪</span> Logout</button>
+                    <button className="sidebar-link" onClick={() => { logout(); setSidebarOpen(false); }}><span className="icon">🚪</span> Logout</button>
                 </div>
             </aside>
 
