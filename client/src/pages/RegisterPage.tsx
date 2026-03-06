@@ -53,7 +53,7 @@ export default function RegisterPage() {
                     <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>🚀</div>
                     <h1>{step === 'form' ? 'Create Account' : 'Verify OTP'}</h1>
                     <p className="subtitle">
-                        {step === 'form' ? 'Join the National Admission Portal — it\'s completely free' : `OTP sent to ${form.email}`}
+                        {step === 'form' ? 'Join the National Admission Portal' : `OTP sent to ${form.email}`}
                     </p>
                 </div>
 
@@ -89,7 +89,7 @@ export default function RegisterPage() {
                         </div>
 
                         <button type="submit" className="btn btn-primary btn-block btn-lg" disabled={loading}>
-                            {loading ? '⏳ Creating...' : '🎓 Register Free'}
+                            {loading ? '⏳ Creating...' : '🎓 Register'}
                         </button>
                     </form>
                 ) : (

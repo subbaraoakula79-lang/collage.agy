@@ -19,16 +19,14 @@ export default function LandingPage() {
                         {theme === 'light' ? '🌙' : '☀️'}
                     </button>
                     <button className="btn btn-secondary btn-sm" onClick={() => nav('/login')}>Login</button>
-                    <button className="btn btn-primary btn-sm" onClick={() => nav('/register')}>Register Free</button>
+                    <button className="btn btn-primary btn-sm" onClick={() => nav('/register')}>Register</button>
                 </div>
             </nav>
 
             {/* Hero */}
             <section className="hero">
                 <div className="hero-content">
-                    <div className="badge badge-primary mb-lg animate-slide-up" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.3)' }}>
-                        🇮🇳 Completely Free
-                    </div>
+
                     <h1>
                         Your Future Starts<br />
                         with <span className="gradient-text">Smart Admissions</span>
@@ -40,7 +38,7 @@ export default function LandingPage() {
                     </p>
                     <div className="hero-actions">
                         <button className="btn btn-primary btn-lg" onClick={() => nav('/register')}>
-                            🚀 Apply Now — It's Free
+                            🚀 Apply Now
                         </button>
                         <button className="btn btn-secondary btn-lg" onClick={() => nav('/login')}>
                             Sign In
