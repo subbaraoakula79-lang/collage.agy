@@ -65,7 +65,12 @@ export default function LoginPage() {
                     <div style={{ display: 'grid', gap: '4px', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
                         <span onClick={() => { setEmail('admin@nap.gov.in'); setPassword('Test@123'); }} style={{ cursor: 'pointer' }}>👨‍💼 Admin: admin@nap.gov.in</span>
                         <span onClick={() => { setEmail('faculty1@nap.gov.in'); setPassword('Test@123'); }} style={{ cursor: 'pointer' }}>🏫 College Admin: faculty1@nap.gov.in</span>
-                        <span onClick={() => { setEmail('student1@nap.gov.in'); setPassword('Test@123'); }} style={{ cursor: 'pointer' }}>🎓 Student: student1@nap.gov.in</span>
+                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                            <span onClick={() => { setEmail('student1@nap.gov.in'); setPassword('Test@123'); }} style={{ cursor: 'pointer' }}>🎓 Student 1 (UG)</span>
+                            <span onClick={() => { setEmail('student2@nap.gov.in'); setPassword('Test@123'); }} style={{ cursor: 'pointer' }}>🎓 Student 2 (UG)</span>
+                            <span onClick={() => { setEmail('student3@nap.gov.in'); setPassword('Test@123'); }} style={{ cursor: 'pointer' }}>🎓 Student 3 (PG)</span>
+                            <span onClick={() => { setEmail('student4@nap.gov.in'); setPassword('Test@123'); }} style={{ cursor: 'pointer' }}>🎓 Student 4 (PG)</span>
+                        </div>
                     </div>
                 </div>
             </div>

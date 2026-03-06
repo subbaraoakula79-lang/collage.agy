@@ -145,7 +145,7 @@ async function main() {
     // Create Fresh Mock Students
     const students = [
         {
-            name: 'Rahul Varma', email: 'rahul@nap.gov.in', phone: '9876543210', gender: 'MALE', dob: '2004-05-15',
+            name: 'Rahul Varma', email: 'student1@nap.gov.in', phone: '9876543210', gender: 'MALE', dob: '2004-05-15',
             category: 'GENERAL', minority: false, ph: false, sports: false,
             fatherName: 'Suresh Varma', motherName: 'Lakshmi', parentMobile: '9800011111', parentOccupation: 'Business', annualIncome: 600000,
             houseNo: '12-5-100', street: 'Gandhi Nagar', village: 'Tirupati', mandal: 'Tirupati Urban', district: 'Tirupati', pincode: '517501',
@@ -154,7 +154,7 @@ async function main() {
             ug: null
         },
         {
-            name: 'Anjali Desai', email: 'anjali@nap.gov.in', phone: '9876543211', gender: 'FEMALE', dob: '2003-08-22',
+            name: 'Anjali Desai', email: 'student2@nap.gov.in', phone: '9876543211', gender: 'FEMALE', dob: '2003-08-22',
             category: 'OBC', minority: false, ph: false, sports: true,
             fatherName: 'Rajesh Desai', motherName: 'Sunita', parentMobile: '9800022222', parentOccupation: 'Teacher', annualIncome: 450000,
             houseNo: '3-2-45', street: 'Nehru Street', village: 'Guntur', mandal: 'Guntur', district: 'Guntur', pincode: '522001',
@@ -163,7 +163,7 @@ async function main() {
             ug: null
         },
         {
-            name: 'Kiran Reddy', email: 'kiran@nap.gov.in', phone: '9876543212', gender: 'MALE', dob: '2001-01-10',
+            name: 'Kiran Reddy', email: 'student3@nap.gov.in', phone: '9876543212', gender: 'MALE', dob: '2001-01-10',
             category: 'SC', minority: false, ph: false, sports: false,
             fatherName: 'Venkata Reddy', motherName: 'Padma', parentMobile: '9800033333', parentOccupation: 'Govt Employee', annualIncome: 800000,
             houseNo: '7-1-88', street: 'Main Road', village: 'Kurnool', mandal: 'Kurnool', district: 'Kurnool', pincode: '518001',
@@ -172,7 +172,7 @@ async function main() {
             ug: { m: 480, t: 600, p: 80.0 }
         },
         {
-            name: 'Sneha Rao', email: 'sneha@nap.gov.in', phone: '9876543213', gender: 'FEMALE', dob: '2001-11-25',
+            name: 'Sneha Rao', email: 'student4@nap.gov.in', phone: '9876543213', gender: 'FEMALE', dob: '2001-11-25',
             category: 'GENERAL', minority: false, ph: true, sports: false,
             fatherName: 'Ramaiah Rao', motherName: 'Sarojini', parentMobile: '9800044444', parentOccupation: 'Farmer', annualIncome: 200000,
             houseNo: '15-6-200', street: 'Temple Road', village: 'Vijayawada', mandal: 'Vijayawada', district: 'NTR', pincode: '520001',
@@ -215,10 +215,10 @@ async function main() {
     console.log('   Admin:         admin@nap.gov.in');
     console.log('   College Admin1: faculty1@nap.gov.in (SVU, Science & Commerce Dept)');
     console.log('   College Admin2: faculty2@nap.gov.in (JNTUK, Engineering Dept)');
-    console.log('   Student1 (UG): rahul@nap.gov.in  (Inter 93%)');
-    console.log('   Student2 (UG): anjali@nap.gov.in (Inter 79%)');
-    console.log('   Student3 (PG): kiran@nap.gov.in  (UG 80%)');
-    console.log('   Student4 (PG): sneha@nap.gov.in  (UG 85%)');
+    console.log('   Student1 (UG): student1@nap.gov.in  (Inter 93%)');
+    console.log('   Student2 (UG): student2@nap.gov.in (Inter 79%)');
+    console.log('   Student3 (PG): student3@nap.gov.in  (UG 80%)');
+    console.log('   Student4 (PG): student4@nap.gov.in  (UG 85%)');
     console.log('\n🔐 DigiLocker: PIN=1234, OTP=123456, Mobiles: 9876543210-9876543213');
     console.log('🎉 Seeding complete!');
 }
