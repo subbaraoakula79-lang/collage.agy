@@ -226,7 +226,8 @@ export default function StudentDashboard() {
                     <div className="navbar-right">
                         <button className="btn btn-secondary btn-sm" onClick={toggleTheme} style={{ padding: '6px', marginRight: '8px' }}>{theme === 'light' ? '🌙' : '☀️'}</button>
                         <span className="role-badge student">Student</span>
-                        <div className="navbar-user" onClick={logout}><div className="user-avatar">{user?.name?.[0]}</div><span style={{ fontSize: '0.85rem' }}>{user?.name}</span></div>
+                        <div className="navbar-user"><div className="user-avatar">{user?.name?.[0]}</div><span style={{ fontSize: '0.85rem' }}>{user?.name}</span></div>
+                        <button className="btn btn-secondary btn-sm" onClick={logout} style={{ padding: '6px', marginLeft: '8px' }} title="Logout">🚪</button>
                     </div>
                 </nav>
                 <main className="main-content" style={{ marginLeft: 0, maxWidth: '900px', margin: '0 auto', paddingTop: '100px' }}>

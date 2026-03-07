@@ -144,7 +144,7 @@ export default function AdminDashboard() {
                         {theme === 'light' ? '🌙' : '☀️'}
                     </button>
                     <span className="role-badge admin">Admin</span>
-                    <div className="navbar-user" onClick={logout}>
+                    <div className="navbar-user">
                         <div className="user-avatar">{user?.name?.[0]}</div>
                         <span style={{ fontSize: '0.85rem' }}>{user?.name}</span>
                     </div>
