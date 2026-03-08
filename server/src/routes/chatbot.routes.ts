@@ -124,80 +124,79 @@ router.post('/message', async (req: AuthRequest, res, next) => {
         let provider = 'GEMINI';
 
         try {
-            // Priority 1: OpenAI (As requested by user)
-            if (openai) {
+            // Priority 1: Gemini (Primary provider)
+            if (genAI) {
                 try {
-                    provider = 'CHATGPT';
-                    // Get previous history for context
+                    provider = 'GEMINI';
+                    const model = genAI.getGenerativeModel({
+                        model: "gemini-2.5-flash",
+                        systemInstruction: systemPrompt
+                    });
                     const history = await prisma.chatHistory.findMany({
                         where: { userId: req.user!.id },
                         orderBy: { createdAt: 'desc' },
-                        take: 5
+                        take: 6
                     });
-                    const msgs: any[] = history.reverse().map((h: any) => ({
-                        role: h.role === 'user' ? 'user' : 'assistant',
-                        content: h.message
-                    }));
-                    msgs.unshift({ role: 'system', content: systemPrompt });
-
-                    const completion = await openai.chat.completions.create({
-                        model: 'gpt-4o-mini',
-                        messages: [
-                            ...msgs,
-                            { role: 'user', content: message }
-                        ]
+                    const chat = model.startChat({
+                        history: history.reverse().filter(h => h.message).map(h => ({
+                            role: h.role === 'user' ? 'user' : 'model',
+                            parts: [{ text: h.message }]
+                        }))
                     });
-                    text = completion.choices[0]?.message?.content || 'Sorry, I could not understand that.';
-                } catch (oaError: any) {
-                    console.error('OpenAI Error:', oaError.message);
-                    if (genAI) {
-                        console.log('Falling back to Gemini...');
-                        // Gemini logic below
-                        provider = 'GEMINI';
-                        const model = genAI.getGenerativeModel({
-                            model: "gemini-2.5-flash",
-                            systemInstruction: systemPrompt
-                        });
+                    const result = await chat.sendMessage(message);
+                    const response = await result.response;
+                    text = response.text();
+                } catch (geminiError: any) {
+                    console.error('Gemini Error:', geminiError.message);
+                    if (openai) {
+                        console.log('Falling back to OpenAI...');
+                        provider = 'CHATGPT';
                         const history = await prisma.chatHistory.findMany({
                             where: { userId: req.user!.id },
                             orderBy: { createdAt: 'desc' },
-                            take: 6
+                            take: 5
                         });
-                        const chat = model.startChat({
-                            history: history.reverse().filter(h => h.message).map(h => ({
-                                role: h.role === 'user' ? 'user' : 'model',
-                                parts: [{ text: h.message }]
-                            }))
+                        const msgs: any[] = history.reverse().map((h: any) => ({
+                            role: h.role === 'user' ? 'user' : 'assistant',
+                            content: h.message
+                        }));
+                        msgs.unshift({ role: 'system', content: systemPrompt });
+
+                        const completion = await openai.chat.completions.create({
+                            model: 'gpt-4o-mini',
+                            messages: [
+                                ...msgs,
+                                { role: 'user', content: message }
+                            ]
                         });
-                        const result = await chat.sendMessage(message);
-                        const response = await result.response;
-                        text = response.text();
+                        text = completion.choices[0]?.message?.content || 'Sorry, I could not understand that.';
                     } else {
-                        throw oaError;
+                        throw geminiError;
                     }
                 }
             }
-            // Priority 2: Gemini (If OpenAI not configured)
-            else if (genAI) {
-                provider = 'GEMINI';
-                const model = genAI.getGenerativeModel({
-                    model: "gemini-2.5-flash",
-                    systemInstruction: systemPrompt
-                });
+            // Priority 2: OpenAI (If Gemini not configured)
+            else if (openai) {
+                provider = 'CHATGPT';
                 const history = await prisma.chatHistory.findMany({
                     where: { userId: req.user!.id },
                     orderBy: { createdAt: 'desc' },
-                    take: 6
+                    take: 5
                 });
-                const chat = model.startChat({
-                    history: history.reverse().filter(h => h.message).map(h => ({
-                        role: h.role === 'user' ? 'user' : 'model',
-                        parts: [{ text: h.message }]
-                    }))
+                const msgs: any[] = history.reverse().map((h: any) => ({
+                    role: h.role === 'user' ? 'user' : 'assistant',
+                    content: h.message
+                }));
+                msgs.unshift({ role: 'system', content: systemPrompt });
+
+                const completion = await openai.chat.completions.create({
+                    model: 'gpt-4o-mini',
+                    messages: [
+                        ...msgs,
+                        { role: 'user', content: message }
+                    ]
                 });
-                const result = await chat.sendMessage(message);
-                const response = await result.response;
-                text = response.text();
+                text = completion.choices[0]?.message?.content || 'Sorry, I could not understand that.';
             }
             else {
                 throw new Error('No AI provider available');
