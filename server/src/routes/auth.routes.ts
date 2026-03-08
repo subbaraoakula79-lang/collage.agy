@@ -81,7 +81,7 @@ router.post('/login', async (req, res, next) => {
         }
 
         const valid = await bcrypt.compare(password, user.password);
-        if (!valid) throw new AppError('Invalid credentials', 401);
+        if (!valid) throw new AppError('Wrong password', 401);
 
         const token = jwt.sign(
             { id: user.id, email: user.email, role: user.role, name: user.name },
