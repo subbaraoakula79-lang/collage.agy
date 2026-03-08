@@ -18,7 +18,8 @@ router.post('/register', async (req, res, next) => {
         const validRoles = ['STUDENT', 'FACULTY', 'ADMIN'];
         const userRole = validRoles.includes(role) ? role : 'STUDENT';
 
-        const existing = await prisma.user.findUnique({ where: { email } });
+        const lowerEmail = email.toLowerCase();
+        const existing = await prisma.user.findUnique({ where: { email: lowerEmail } });
         if (existing) throw new AppError('Email already registered');
 
         const hashed = await bcrypt.hash(password, 12);
@@ -26,7 +27,7 @@ router.post('/register', async (req, res, next) => {
         const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
         const user = await prisma.user.create({
-            data: { name, email, password: hashed, role: userRole, phone, otp, otpExpiresAt }
+            data: { name, email: lowerEmail, password: hashed, role: userRole, phone, otp, otpExpiresAt }
         });
 
         if (userRole === 'STUDENT') {
@@ -44,7 +45,8 @@ router.post('/register', async (req, res, next) => {
 router.post('/verify-otp', async (req, res, next) => {
     try {
         const { email, otp } = req.body;
-        const user = await prisma.user.findUnique({ where: { email } });
+        const lowerEmail = email.toLowerCase();
+        const user = await prisma.user.findUnique({ where: { email: lowerEmail } });
         if (!user) throw new AppError('User not found');
         if (user.otp !== otp) throw new AppError('Invalid OTP');
         if (user.otpExpiresAt && user.otpExpiresAt < new Date()) throw new AppError('OTP expired');
@@ -60,7 +62,7 @@ router.post('/verify-otp', async (req, res, next) => {
             { expiresIn: (process.env.JWT_EXPIRES_IN || '7d') as any }
         );
 
-        res.json({ message: 'Email verified', token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
+        res.json({ message: 'Email verified', token, user: { id: user.id, name: user.name, email: user.email, role: user.role, isVerified: true } });
     } catch (err) { next(err); }
 });
 
@@ -70,8 +72,13 @@ router.post('/login', async (req, res, next) => {
         const { email, password } = req.body;
         if (!email || !password) throw new AppError('Email and password required');
 
-        const user = await prisma.user.findUnique({ where: { email } });
+        const lowerEmail = email.toLowerCase();
+        const user = await prisma.user.findUnique({ where: { email: lowerEmail } });
         if (!user) throw new AppError('Invalid credentials', 401);
+
+        if (!user.isVerified) {
+            throw new AppError('Please verify your email before logging in.', 403);
+        }
 
         const valid = await bcrypt.compare(password, user.password);
         if (!valid) throw new AppError('Invalid credentials', 401);

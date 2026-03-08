@@ -41,7 +41,7 @@ export default function LoginPage() {
                 <form onSubmit={handleLogin}>
                     <div className="form-group">
                         <label className="form-label">Email Address</label>
-                        <input type="email" className="form-input" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} required />
+                        <input type="email" className="form-input" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value.toLowerCase())} required />
                     </div>
 
                     <div className="form-group">

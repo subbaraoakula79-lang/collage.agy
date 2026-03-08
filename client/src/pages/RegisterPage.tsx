@@ -66,7 +66,7 @@ export default function RegisterPage() {
 
                         <div className="form-group">
                             <label className="form-label">Email</label>
-                            <input type="email" className="form-input" placeholder="you@example.com" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required />
+                            <input type="email" className="form-input" placeholder="you@example.com" value={form.email} onChange={e => setForm({ ...form, email: e.target.value.toLowerCase() })} required />
                         </div>
 
                         <div className="form-row">
