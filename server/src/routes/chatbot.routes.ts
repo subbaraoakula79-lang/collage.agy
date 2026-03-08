@@ -112,8 +112,18 @@ Your primary role is to guide students, parents, and faculty through the admissi
 // Send message
 router.post('/message', async (req: AuthRequest, res, next) => {
     try {
-        const { message } = req.body;
+        const { message, language } = req.body;
         if (!message) throw new AppError('Message is required');
+
+        // Build language-specific instruction
+        const langInstructions: Record<string, string> = {
+            english: 'You MUST respond entirely in English.',
+            telugu: 'You MUST respond entirely in Telugu (తెలుగు) script. Use Telugu characters only. Do NOT use English.',
+            tenglish: 'You MUST respond in Tenglish — Telugu language written in English/Latin script. For example: "Meeru ela unnaru?" instead of "మీరు ఎలా ఉన్నారు?". Do NOT use Telugu script.',
+            hindi: 'You MUST respond entirely in Hindi (हिन्दी) using Devanagari script. Do NOT use English.',
+        };
+        const langInstruction = langInstructions[language] || langInstructions.english;
+        const localizedPrompt = systemPrompt + `\n\n### Language Instruction:\n${langInstruction}\nAlways follow this language rule strictly for every response.`;
 
         // Store user message
         await prisma.chatHistory.create({
@@ -130,7 +140,7 @@ router.post('/message', async (req: AuthRequest, res, next) => {
                     provider = 'GEMINI';
                     const model = genAI.getGenerativeModel({
                         model: "gemini-2.5-flash",
-                        systemInstruction: systemPrompt
+                        systemInstruction: localizedPrompt
                     });
                     const history = await prisma.chatHistory.findMany({
                         where: { userId: req.user!.id },
@@ -160,7 +170,7 @@ router.post('/message', async (req: AuthRequest, res, next) => {
                             role: h.role === 'user' ? 'user' : 'assistant',
                             content: h.message
                         }));
-                        msgs.unshift({ role: 'system', content: systemPrompt });
+                        msgs.unshift({ role: 'system', content: localizedPrompt });
 
                         const completion = await openai.chat.completions.create({
                             model: 'gpt-4o-mini',
@@ -187,7 +197,7 @@ router.post('/message', async (req: AuthRequest, res, next) => {
                     role: h.role === 'user' ? 'user' : 'assistant',
                     content: h.message
                 }));
-                msgs.unshift({ role: 'system', content: systemPrompt });
+                msgs.unshift({ role: 'system', content: localizedPrompt });
 
                 const completion = await openai.chat.completions.create({
                     model: 'gpt-4o-mini',
