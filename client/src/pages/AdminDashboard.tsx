@@ -22,6 +22,7 @@ export default function AdminDashboard() {
     const [admissionPhases, setAdmissionPhases] = useState<any[]>([]);
     const [roundSchedule, setRoundSchedule] = useState({ admissionType: '', startDate: '', endDate: '' });
     const [roundLoading, setRoundLoading] = useState(false);
+    const [editingCollegeId, setEditingCollegeId] = useState<string | null>(null);
 
     useEffect(() => { loadDashboard(); }, []);
 
@@ -65,12 +66,30 @@ export default function AdminDashboard() {
 
     const saveCollege = async () => {
         try {
-            await api.post('/admin/colleges', collegeForm);
-            showToast('College added successfully!', 'success');
+            if (editingCollegeId) {
+                await api.patch(`/admin/colleges/${editingCollegeId}`, collegeForm);
+                showToast('College updated successfully!', 'success');
+            } else {
+                await api.post('/admin/colleges', collegeForm);
+                showToast('College added successfully!', 'success');
+            }
             setShowCollegeForm(false);
+            setEditingCollegeId(null);
             setCollegeForm({ name: '', code: '', accessCode: '86390', city: '', state: 'Andhra Pradesh' });
             loadDashboard();
-        } catch (err: any) { showToast(err.response?.data?.error || 'Failed to add college', 'error'); }
+        } catch (err: any) { showToast(err.response?.data?.error || `Failed to ${editingCollegeId ? 'update' : 'add'} college`, 'error'); }
+    };
+
+    const handleEditCollege = (college: any) => {
+        setEditingCollegeId(college.id);
+        setCollegeForm({
+            name: college.name,
+            code: college.code,
+            accessCode: college.accessCode,
+            city: college.city,
+            state: college.state
+        });
+        setShowCollegeForm(true);
     };
 
     const initiateRefund = async (paymentId: string) => {
@@ -258,12 +277,18 @@ export default function AdminDashboard() {
                     <div className="animate-fade">
                         <div className="flex-between mb-lg">
                             <div className="page-header" style={{ marginBottom: 0 }}><h1>🏢 Manage Colleges</h1></div>
-                            <button className="btn btn-primary" onClick={() => setShowCollegeForm(!showCollegeForm)}>{showCollegeForm ? 'Cancel' : '+ Add College'}</button>
+                            <button className="btn btn-primary" onClick={() => {
+                                setShowCollegeForm(!showCollegeForm);
+                                if (showCollegeForm) {
+                                    setEditingCollegeId(null);
+                                    setCollegeForm({ name: '', code: '', accessCode: '86390', city: '', state: 'Andhra Pradesh' });
+                                }
+                            }}>{showCollegeForm ? 'Cancel' : '+ Add College'}</button>
                         </div>
 
                         {showCollegeForm && (
                             <div className="card mb-lg">
-                                <h3 className="card-title mb-lg">New College</h3>
+                                <h3 className="card-title mb-lg">{editingCollegeId ? 'Edit College' : 'New College'}</h3>
                                 <div className="form-row">
                                     <div className="form-group"><label className="form-label">Name</label><input className="form-input" value={collegeForm.name} onChange={e => setCollegeForm({ ...collegeForm, name: e.target.value })} /></div>
                                     <div className="form-group"><label className="form-label">Code (Unique)</label><input className="form-input" value={collegeForm.code} onChange={e => setCollegeForm({ ...collegeForm, code: e.target.value })} /></div>
@@ -282,7 +307,7 @@ export default function AdminDashboard() {
 
                         <div className="table-container">
                             <table>
-                                <thead><tr><th>Name</th><th>Code</th><th>Access Code</th><th>Location</th><th>Stats</th></tr></thead>
+                                <thead><tr><th>Name</th><th>Code</th><th>Access Code</th><th>Location</th><th>Stats</th><th>Actions</th></tr></thead>
                                 <tbody>
                                     {colleges.map((c: any) => (
                                         <tr key={c.id}>
@@ -291,6 +316,9 @@ export default function AdminDashboard() {
                                             <td><code style={{ fontSize: '0.8rem', color: 'var(--primary)' }}>{c.accessCode}</code></td>
                                             <td>{c.city}, {c.state}</td>
                                             <td style={{ fontSize: '0.9rem' }}>{c._count?.courses || 0} Courses • {c._count?.faculty || 0} College Admins</td>
+                                            <td>
+                                                <button className="btn btn-secondary btn-sm" onClick={() => handleEditCollege(c)}>Edit</button>
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>

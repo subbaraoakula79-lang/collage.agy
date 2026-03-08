@@ -158,6 +158,29 @@ router.get('/colleges', async (_req: AuthRequest, res, next) => {
     } catch (err) { next(err); }
 });
 
+router.patch('/colleges/:id', async (req: AuthRequest, res, next) => {
+    try {
+        const id = req.params.id as string;
+        const { name, code, accessCode, address, city, state } = req.body;
+        const college = await prisma.college.update({
+            where: { id },
+            data: { name, code, accessCode, address, city, state }
+        });
+
+        await prisma.auditLog.create({
+            data: {
+                userId: req.user!.id,
+                action: 'UPDATE_COLLEGE',
+                entity: 'College',
+                entityId: id,
+                details: JSON.stringify({ name, code, city, state })
+            }
+        });
+
+        res.json(college);
+    } catch (err) { next(err); }
+});
+
 // Analytics endpoint
 router.get('/analytics', async (_req: AuthRequest, res, next) => {
     try {
