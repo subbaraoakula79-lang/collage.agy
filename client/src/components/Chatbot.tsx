@@ -38,28 +38,42 @@ export default function Chatbot() {
     };
 
     return (
-        <>
-            <button className="chatbot-toggle" onClick={() => setOpen(!open)} title="AI Assistant">
-                {open ? '✕' : '🤖'}
+        <div className="chatbot-wrapper" style={{ zIndex: 10000 }}>
+            <button className={`chatbot-toggle ${open ? 'active' : ''}`} onClick={() => setOpen(!open)} title="AI Counselor">
+                {open ? (
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                ) : (
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 2a10 10 0 0 1 10 10c0 5.523-4.477 10-10 10-2.07 0-4.043-.687-5.59-1.85a.998.998 0 0 0-.855-.17l-3.21 1.07a.5.5 0 0 1-.633-.632l1.07-3.21a.998.998 0 0 0-.17-.855A10 10 0 0 1 12 2z" />
+                        <circle cx="8" cy="12" r=".5" fill="currentColor" /><circle cx="12" cy="12" r=".5" fill="currentColor" /><circle cx="16" cy="12" r=".5" fill="currentColor" />
+                    </svg>
+                )}
             </button>
 
             {open && (
-                <div className="chatbot-panel">
+                <div className="chatbot-panel animate-slide-up">
                     <div className="chatbot-header">
-                        <div>
-                            <strong style={{ fontSize: '0.95rem' }}>🤖 AI Counselor</strong>
-                            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Ask about admissions, eligibility & more</p>
+                        <div className="flex align-center gap-sm">
+                            <div className="ai-status-dot"></div>
+                            <div>
+                                <strong style={{ fontSize: '0.95rem', color: 'white' }}>AI Counselor</strong>
+                                <p style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.7)', marginTop: '1px' }}>Nap support is online</p>
+                            </div>
                         </div>
-                        <button className="modal-close" onClick={() => setOpen(false)}>✕</button>
+                        <button className="icon-btn" onClick={() => setOpen(false)} style={{ color: 'rgba(255,255,255,0.5)' }}>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>
                     </div>
 
                     <div className="chatbot-messages">
                         {messages.length === 0 && (
-                            <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                                <p>👋 Hi! I can help with:</p>
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'center', marginTop: '12px' }}>
-                                    {['Eligibility', 'Reservation', 'Courses', 'Payments', 'Scholarships'].map(t => (
-                                        <button key={t} className="btn btn-secondary btn-sm" onClick={() => { setInput(`Tell me about ${t.toLowerCase()}`); }}>
+                            <div className="chatbot-welcome">
+                                <div className="welcome-icon">✨</div>
+                                <h3>How can I help you today?</h3>
+                                <p>I can assist with admissions, eligibility, and scholarship queries.</p>
+                                <div className="welcome-chips">
+                                    {['Eligibility', 'Reservation', 'Payments', 'Scholarships'].map(t => (
+                                        <button key={t} className="chip" onClick={() => setInput(`Tell me about ${t.toLowerCase()}`)}>
                                             {t}
                                         </button>
                                     ))}
@@ -67,25 +81,32 @@ export default function Chatbot() {
                             </div>
                         )}
                         {messages.map((m: any, i: number) => (
-                            <div key={i} className={`chat-msg ${m.role}`}>
-                                {m.message}
-                                {m.provider && <span className="provider-tag">via {m.provider}</span>}
+                            <div key={i} className={`chat-msg ${m.role} animate-fade-in`}>
+                                <div className="msg-content">{m.message}</div>
+                                {m.provider && <span className="provider-tag">AI Powered</span>}
                             </div>
                         ))}
                         {loading && (
-                            <div className="chat-msg assistant" style={{ opacity: 0.6 }}>
-                                <span style={{ animation: 'pulse 1s infinite' }}>Thinking...</span>
+                            <div className="chat-msg assistant typing">
+                                <div className="typing-dots"><span></span><span></span><span></span></div>
                             </div>
                         )}
                         <div ref={messagesEnd} />
                     </div>
 
                     <div className="chatbot-input">
-                        <input placeholder="Ask anything..." value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendMessage()} />
-                        <button onClick={sendMessage} disabled={!input.trim() || loading}>→</button>
+                        <input
+                            placeholder="Type your question..."
+                            value={input}
+                            onChange={e => setInput(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && sendMessage()}
+                        />
+                        <button className="send-btn" onClick={sendMessage} disabled={!input.trim() || loading}>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                        </button>
                     </div>
                 </div>
             )}
-        </>
+        </div>
     );
 }
