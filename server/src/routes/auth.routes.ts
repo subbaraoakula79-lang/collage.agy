@@ -93,6 +93,67 @@ router.post('/login', async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
+// Forgot Password
+router.post('/forgot-password', async (req, res, next) => {
+    try {
+        const { email } = req.body;
+        if (!email) throw new AppError('Email is required');
+
+        const lowerEmail = email.toLowerCase();
+        const user = await prisma.user.findUnique({ where: { email: lowerEmail } });
+
+        // Always return success to avoid email enumeration
+        if (!user) {
+            return res.json({ message: 'If an account exists, a reset code has been sent.' });
+        }
+
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: { otp, otpExpiresAt }
+        });
+
+        console.log(`🔑 Reset OTP for ${lowerEmail}: ${otp}`);
+        res.json({
+            message: 'If an account exists, a reset code has been sent.',
+            otp: process.env.ENV_MODE === 'MOCK_AP' ? otp : undefined
+        });
+    } catch (err) { next(err); }
+});
+
+// Reset Password
+router.post('/reset-password', async (req, res, next) => {
+    try {
+        const { email, otp, newPassword } = req.body;
+        if (!email || !otp || !newPassword) {
+            throw new AppError('Email, OTP, and new password are required');
+        }
+
+        const lowerEmail = email.toLowerCase();
+        const user = await prisma.user.findUnique({ where: { email: lowerEmail } });
+
+        if (!user || user.otp !== otp || !user.otpExpiresAt || user.otpExpiresAt < new Date()) {
+            throw new AppError('Invalid or expired reset code');
+        }
+
+        const hashed = await bcrypt.hash(newPassword, 12);
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                password: hashed,
+                otp: null,
+                otpExpiresAt: null,
+                isVerified: true // Automatically verify if they reset via email
+            }
+        });
+
+        res.json({ message: 'Password reset successful. You can now log in.' });
+    } catch (err) { next(err); }
+});
+
 // Get current user
 router.get('/me', authenticate, async (req: AuthRequest, res, next) => {
     try {

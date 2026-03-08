@@ -23,6 +23,7 @@ export default function LoginPage() {
             else if (data.user.role === 'FACULTY') nav('/faculty');
             else if (data.user.role === 'ADMIN') nav('/admin');
         } catch (err: any) {
+            setPassword(''); // Only wipe password
             showToast(err.response?.data?.error || 'Login failed', 'error');
         } finally {
             setLoading(false);
@@ -45,7 +46,10 @@ export default function LoginPage() {
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">Password</label>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                            <label className="form-label" style={{ marginBottom: 0 }}>Password</label>
+                            <Link to="/forgot-password" style={{ fontSize: '0.8rem', color: 'var(--primary)' }}>Forgot Password?</Link>
+                        </div>
                         <input type="password" className="form-input" placeholder="Enter your password" value={password} onChange={e => setPassword(e.target.value)} required />
                     </div>
 
