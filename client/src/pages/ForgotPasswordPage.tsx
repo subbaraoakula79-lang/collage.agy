@@ -11,6 +11,7 @@ export default function ForgotPasswordPage() {
     const [otp, setOtp] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const [savedOtp, setSavedOtp] = useState('');
 
     const handleRequestOtp = async (e: React.FormEvent) => {
@@ -93,15 +94,26 @@ export default function ForgotPasswordPage() {
 
                         <div className="form-group">
                             <label className="form-label">New Password</label>
-                            <input
-                                type="password"
-                                className="form-input"
-                                placeholder="Min. 6 characters"
-                                value={newPassword}
-                                onChange={e => setNewPassword(e.target.value)}
-                                required
-                                minLength={6}
-                            />
+                            <div className="password-input-wrapper">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    className="form-input"
+                                    placeholder="Min. 6 characters"
+                                    value={newPassword}
+                                    onChange={e => setNewPassword(e.target.value)}
+                                    required
+                                    minLength={6}
+                                    style={{ paddingRight: '46px' }}
+                                />
+                                <button
+                                    type="button"
+                                    className="password-toggle"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    tabIndex={-1}
+                                >
+                                    {showPassword ? '👁️' : '👁️‍🗨️'}
+                                </button>
+                            </div>
                         </div>
 
                         <button type="submit" className="btn btn-primary btn-block btn-lg" disabled={loading || otp.length < 6}>

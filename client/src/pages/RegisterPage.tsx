@@ -10,6 +10,7 @@ export default function RegisterPage() {
     const [form, setForm] = useState({ name: '', email: '', password: '', phone: '', role: 'STUDENT' });
     const [otp, setOtp] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const [savedOtp, setSavedOtp] = useState('');
 
     const handleRegister = async (e: React.FormEvent) => {
@@ -72,7 +73,26 @@ export default function RegisterPage() {
                         <div className="form-row">
                             <div className="form-group">
                                 <label className="form-label">Password</label>
-                                <input type="password" className="form-input" placeholder="Min. 6 characters" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required minLength={6} />
+                                <div className="password-input-wrapper">
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        className="form-input"
+                                        placeholder="Min. 6 characters"
+                                        value={form.password}
+                                        onChange={e => setForm({ ...form, password: e.target.value })}
+                                        required
+                                        minLength={6}
+                                        style={{ paddingRight: '46px' }}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="password-toggle"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        tabIndex={-1}
+                                    >
+                                        {showPassword ? '👁️' : '👁️‍🗨️'}
+                                    </button>
+                                </div>
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Phone</label>
