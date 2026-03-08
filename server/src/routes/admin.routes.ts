@@ -217,31 +217,44 @@ router.get('/rounds', async (_req: AuthRequest, res, next) => {
     } catch (err) { next(err); }
 });
 
-// Schedule allotment round dates
+// Get all admission phases
+router.get('/rounds/phases', async (_req: AuthRequest, res, next) => {
+    try {
+        const phases = await prisma.admissionPhase.findMany();
+        res.json(phases);
+    } catch (err) { next(err); }
+});
+
+// Schedule allotment round dates (by admissionType)
 router.post('/rounds/schedule', async (req: AuthRequest, res, next) => {
     try {
-        const { courseId, startDate, endDate } = req.body;
-        if (!courseId || !startDate || !endDate) throw new AppError('Course, start date, and end date are required');
+        const { admissionType, startDate, endDate } = req.body;
+        if (!admissionType || !startDate || !endDate) {
+            throw new AppError('Admission type, start date, and end date are required');
+        }
 
         const start = new Date(startDate);
         const end = new Date(endDate);
         if (end <= start) throw new AppError('End date must be after start date');
 
-        const course = await prisma.course.findUnique({ where: { id: courseId } });
-        if (!course) throw new AppError('Course not found', 404);
+        const phase = await prisma.admissionPhase.upsert({
+            where: { admissionType },
+            update: { startDate: start, endDate: end },
+            create: { admissionType, startDate: start, endDate: end }
+        });
 
         // Store schedule in audit log for tracking
         await prisma.auditLog.create({
             data: {
                 userId: req.user!.id,
-                action: 'SCHEDULE_ROUND',
-                entity: 'Course',
-                entityId: courseId,
-                details: JSON.stringify({ startDate, endDate, courseName: course.name })
+                action: 'SCHEDULE_PHASE',
+                entity: 'AdmissionPhase',
+                entityId: phase.id,
+                details: JSON.stringify({ startDate, endDate, admissionType })
             }
         });
 
-        res.json({ message: `Allotment round scheduled for ${course.name} from ${start.toLocaleDateString()} to ${end.toLocaleDateString()}` });
+        res.json({ message: `Allotment dates configured for ${admissionType} from ${start.toLocaleDateString()} to ${end.toLocaleDateString()}` });
     } catch (err) { next(err); }
 });
 

@@ -19,7 +19,8 @@ export default function AdminDashboard() {
     const [collegeForm, setCollegeForm] = useState({ name: '', code: '', accessCode: '86390', city: '', state: 'Andhra Pradesh' });
     const [analytics, setAnalytics] = useState<any>(null);
     const [roundData, setRoundData] = useState<any>({ rounds: [], courses: [] });
-    const [roundSchedule, setRoundSchedule] = useState({ courseId: '', startDate: '', endDate: '' });
+    const [admissionPhases, setAdmissionPhases] = useState<any[]>([]);
+    const [roundSchedule, setRoundSchedule] = useState({ admissionType: '', startDate: '', endDate: '' });
     const [roundLoading, setRoundLoading] = useState(false);
 
     useEffect(() => { loadDashboard(); }, []);
@@ -49,8 +50,12 @@ export default function AdminDashboard() {
 
     const loadRounds = async () => {
         try {
-            const { data } = await api.get('/admin/rounds');
-            setRoundData(data);
+            const [rRes, pRes] = await Promise.all([
+                api.get('/admin/rounds'),
+                api.get('/admin/rounds/phases')
+            ]);
+            setRoundData(rRes.data);
+            setAdmissionPhases(pRes.data);
         } catch { }
     };
 
@@ -108,13 +113,14 @@ export default function AdminDashboard() {
     };
 
     const scheduleRound = async () => {
-        if (!roundSchedule.courseId || !roundSchedule.startDate || !roundSchedule.endDate) {
+        if (!roundSchedule.admissionType || !roundSchedule.startDate || !roundSchedule.endDate) {
             return showToast('Please fill all schedule fields', 'warning');
         }
         try {
             const { data } = await api.post('/admin/rounds/schedule', roundSchedule);
             showToast(data.message, 'success');
-            setRoundSchedule({ courseId: '', startDate: '', endDate: '' });
+            setRoundSchedule({ admissionType: '', startDate: '', endDate: '' });
+            loadRounds();
         } catch (err: any) { showToast(err.response?.data?.error || 'Failed', 'error'); }
     };
 
@@ -326,17 +332,38 @@ export default function AdminDashboard() {
                             <p>Schedule and manage admission rounds across all colleges</p>
                         </div>
 
-                        {/* Schedule Round */}
+                        {/* Configured Admission Phases */}
                         <div className="card mb-lg">
-                            <h3 className="card-title mb-lg">📅 Schedule Allotment Round</h3>
+                            <h3 className="card-title mb-md">📅 Current Phase Schedules</h3>
+                            {admissionPhases.length === 0 ? (
+                                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>No allotment dates configured.</p>
+                            ) : (
+                                <div className="table-container mb-md">
+                                    <table>
+                                        <thead><tr><th>Admission Type</th><th>Start Date</th><th>End Date</th></tr></thead>
+                                        <tbody>
+                                            {admissionPhases.map((p: any) => (
+                                                <tr key={p.id}>
+                                                    <td><span className="badge badge-primary">{p.admissionType}</span></td>
+                                                    <td>{new Date(p.startDate).toLocaleDateString()}</td>
+                                                    <td>{new Date(p.endDate).toLocaleDateString()}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+
+                            <h4 className="mb-sm mt-md">Configure New Dates</h4>
                             <div className="form-row">
                                 <div className="form-group">
-                                    <label className="form-label">Select Course</label>
-                                    <select className="form-select" value={roundSchedule.courseId} onChange={e => setRoundSchedule({ ...roundSchedule, courseId: e.target.value })}>
-                                        <option value="">-- Select Course --</option>
-                                        {roundData.courses?.map((c: any) => (
-                                            <option key={c.id} value={c.id}>{c.name} — {c.college?.name}</option>
-                                        ))}
+                                    <label className="form-label">Admission Type</label>
+                                    <select className="form-select" value={roundSchedule.admissionType} onChange={e => setRoundSchedule({ ...roundSchedule, admissionType: e.target.value })}>
+                                        <option value="">-- Select Type --</option>
+                                        <option value="UG">UG</option>
+                                        <option value="PG">PG</option>
+                                        <option value="ENGINEERING">ENGINEERING</option>
+                                        <option value="DIPLOMA">DIPLOMA</option>
                                     </select>
                                 </div>
                                 <div className="form-group">
@@ -348,7 +375,7 @@ export default function AdminDashboard() {
                                     <input type="date" className="form-input" value={roundSchedule.endDate} onChange={e => setRoundSchedule({ ...roundSchedule, endDate: e.target.value })} />
                                 </div>
                             </div>
-                            <button className="btn btn-primary" onClick={scheduleRound}>📅 Schedule Round</button>
+                            <button className="btn btn-primary mt-sm" onClick={scheduleRound}>📅 Save Schedule</button>
                         </div>
 
                         {/* Course-wise Round Controls */}
