@@ -1,5 +1,7 @@
-import dotenv from 'dotenv';
+import 'dotenv/config';
 import path from 'path';
+// Ensure env is loaded before any other imports
+import dotenv from 'dotenv';
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
 import express from 'express';

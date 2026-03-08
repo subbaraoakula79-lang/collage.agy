@@ -2,6 +2,7 @@ import { Router } from 'express';
 import prisma from '../lib/prisma';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const router = Router();
 router.use(authenticate);
@@ -61,9 +62,29 @@ function getMockResponse(message: string): { text: string; provider: string } {
 
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
-});
+let openai: OpenAI | null = null;
+try {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (apiKey && apiKey !== 'mock' && !apiKey.startsWith('sk-proj-YOUR')) {
+        openai = new OpenAI({ apiKey });
+    } else {
+        console.log('🤖 AI Chatbot: Using mock responses (No valid OPENAI_API_KEY found)');
+    }
+} catch (error) {
+    console.error('❌ OpenAI Initialization Error:', error);
+}
+
+let genAI: GoogleGenerativeAI | null = null;
+try {
+    const geminiKey = process.env.GEMINI_API_KEY;
+    if (geminiKey && geminiKey !== 'mock') {
+        genAI = new GoogleGenerativeAI(geminiKey);
+    } else {
+        console.log('🤖 AI Chatbot: Gemini not configured (GEMINI_API_KEY is mock or missing)');
+    }
+} catch (error) {
+    console.error('❌ Gemini Initialization Error:', error);
+}
 
 // Configure OpenAI instructions
 const systemPrompt = `You are a helpful AI assistant for the National Admission Portal.
@@ -83,34 +104,64 @@ router.post('/message', async (req: AuthRequest, res, next) => {
         });
 
         let text = '';
-        let provider = 'CHATGPT';
+        let provider = 'GEMINI';
 
         try {
-            // Get previous history for context
-            const history = await prisma.chatHistory.findMany({
-                where: { userId: req.user!.id },
-                orderBy: { createdAt: 'desc' },
-                take: 5 // Last 5 messages
-            });
-            const msgs: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = history.reverse().map((h: any) => ({
-                role: h.role === 'user' ? 'user' : 'assistant',
-                content: h.message
-            }));
-            msgs.unshift({ role: 'system', content: systemPrompt });
+            // Priority 1: Gemini (User requested)
+            if (genAI) {
+                const model = genAI.getGenerativeModel({
+                    model: "gemini-1.5-flash",
+                    systemInstruction: systemPrompt
+                });
 
-            // Call OpenAI
-            const completion = await openai.chat.completions.create({
-                model: 'gpt-4o-mini',
-                messages: [
-                    ...msgs,
-                    { role: 'user', content: message }
-                ]
-            });
+                // Get previous history for context
+                const history = await prisma.chatHistory.findMany({
+                    where: { userId: req.user!.id },
+                    orderBy: { createdAt: 'desc' },
+                    take: 6 // Last 6 messages (3 pairs)
+                });
 
-            text = completion.choices[0]?.message?.content || 'Sorry, I could not understand that.';
-        } catch (error) {
-            console.error('OpenAI Error:', error);
-            // Fallback to mock text if OpenAI fails
+                const chat = model.startChat({
+                    history: history.reverse().filter(h => h.message).map(h => ({
+                        role: h.role === 'user' ? 'user' : 'model',
+                        parts: [{ text: h.message }]
+                    }))
+                });
+
+                const result = await chat.sendMessage(message);
+                const response = await result.response;
+                text = response.text();
+            }
+            // Priority 2: OpenAI (Fallback)
+            else if (openai) {
+                provider = 'CHATGPT';
+                // Get previous history for context
+                const history = await prisma.chatHistory.findMany({
+                    where: { userId: req.user!.id },
+                    orderBy: { createdAt: 'desc' },
+                    take: 5
+                });
+                const msgs: any[] = history.reverse().map((h: any) => ({
+                    role: h.role === 'user' ? 'user' : 'assistant',
+                    content: h.message
+                }));
+                msgs.unshift({ role: 'system', content: systemPrompt });
+
+                const completion = await openai.chat.completions.create({
+                    model: 'gpt-4o-mini',
+                    messages: [
+                        ...msgs,
+                        { role: 'user', content: message }
+                    ]
+                });
+                text = completion.choices[0]?.message?.content || 'Sorry, I could not understand that.';
+            }
+            else {
+                throw new Error('No AI provider available');
+            }
+        } catch (error: any) {
+            console.error('AI Error:', error.message);
+            // Fallback to mock text
             const fallback = getMockResponse(message);
             text = fallback.text;
             provider = fallback.provider;

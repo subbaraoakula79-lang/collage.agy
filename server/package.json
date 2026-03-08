@@ -10,6 +10,7 @@
         "seed": "npx tsx src/seed/seed.ts"
     },
     "dependencies": {
+        "@google/generative-ai": "^0.24.1",
         "@prisma/client": "^5.22.0",
         "axios": "^1.13.6",
         "bcryptjs": "^2.4.3",
