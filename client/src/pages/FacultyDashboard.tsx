@@ -2,6 +2,7 @@ import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../App';
 import api from '../api';
+import Chatbot from '../components/Chatbot';
 
 export default function FacultyDashboard() {
     const { user, setUser, showToast, theme, toggleTheme } = useContext(AppContext);
@@ -559,6 +560,7 @@ export default function FacultyDashboard() {
                     </div>
                 </div>
             )}
+            <Chatbot />
         </div>
     );
 }

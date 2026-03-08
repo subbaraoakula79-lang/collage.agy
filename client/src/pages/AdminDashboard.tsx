@@ -2,6 +2,7 @@ import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../App';
 import api from '../api';
+import Chatbot from '../components/Chatbot';
 
 export default function AdminDashboard() {
     const { user, setUser, showToast, theme, toggleTheme } = useContext(AppContext);
@@ -615,6 +616,7 @@ export default function AdminDashboard() {
                     </div>
                 )}
             </main>
+            <Chatbot />
         </div>
     );
 }
