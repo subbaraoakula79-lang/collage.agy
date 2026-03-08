@@ -44,9 +44,14 @@ export default function Chatbot() {
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 ) : (
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M12 2a10 10 0 0 1 10 10c0 5.523-4.477 10-10 10-2.07 0-4.043-.687-5.59-1.85a.998.998 0 0 0-.855-.17l-3.21 1.07a.5.5 0 0 1-.633-.632l1.07-3.21a.998.998 0 0 0-.17-.855A10 10 0 0 1 12 2z" />
-                        <circle cx="8" cy="12" r=".5" fill="currentColor" /><circle cx="12" cy="12" r=".5" fill="currentColor" /><circle cx="16" cy="12" r=".5" fill="currentColor" />
+                        <path d="M12 8V4H8" />
+                        <rect width="16" height="12" x="4" y="8" rx="2" />
+                        <path d="M2 14h2" />
+                        <path d="M20 14h2" />
+                        <path d="M15 13v2" />
+                        <path d="M9 13v2" />
                     </svg>
+
                 )}
             </button>
 
@@ -83,7 +88,7 @@ export default function Chatbot() {
                         {messages.map((m: any, i: number) => (
                             <div key={i} className={`chat-msg ${m.role} animate-fade-in`}>
                                 <div className="msg-content">{m.message}</div>
-                                {m.provider && <span className="provider-tag">AI Powered</span>}
+                                {m.provider && <span className="provider-tag">{m.provider} AI</span>}
                             </div>
                         ))}
                         {loading && (

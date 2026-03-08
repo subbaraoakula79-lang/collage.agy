@@ -3,6 +3,7 @@ import prisma from '../lib/prisma';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import OpenAI from 'openai';
 
 const router = Router();
 router.use(authenticate);
@@ -60,8 +61,6 @@ function getMockResponse(message: string): { text: string; provider: string } {
     return { text, provider };
 }
 
-import OpenAI from 'openai';
-
 let openai: OpenAI | null = null;
 try {
     const apiKey = process.env.OPENAI_API_KEY;
@@ -87,31 +86,28 @@ try {
 }
 
 // Configure AI Instructions with Website Context
-const systemPrompt = `You are the "NAP AI Counselor", a helpful and intelligent assistant for the National Admission Portal (NAP), Andhra Pradesh.
-Your goal is to guide students through the admission process and answer questions about colleges, courses, eligibility, and payments.
+const systemPrompt = `You are the "NAP AI Counselor", a highly intelligent and empathetic assistant for the National Admission Portal (NAP), Andhra Pradesh.
+Your primary role is to guide students, parents, and faculty through the admission lifecycle with precision and professional warmth.
 
-### Website Details & Portal Knowledge:
-1. **Admission Scope**: UG (Undergraduate), PG (Postgraduate), and Engineering admissions across Andhra Pradesh.
-2. **Featured Colleges**:
-   - **Sri Venkateswara University (SVU)**, Tirupati: Offers B.Sc Computer Science (Fee: ₹35,000, Merit-based), M.Sc Computer Science (Fee: ₹45,000).
-   - **Andhra University (AU)**, Visakhapatnam: Offers B.Com General (Fee: ₹25,000), B.Tech Electronics (Fee: ₹68,000).
-   - **JNTU Kakinada (JNTUK)** & **JNTU Anantapur (JNTUA)** (Offers BBA: ₹45,000, MBA: ₹90,000).
-   - **PRGC(A)**, Kakinada: Offers BSC (Information Technology) with a very affordable fee (₹11,985).
-3. **The Admission Journey**:
-   - Step 1: Registration & OTP Verification.
-   - Step 2: Admission Type Selection (UG/PG).
-   - Step 3: **DigiLocker Verification** (Mandatory). This fetches academic records automatically.
-   - Step 4: Course Selection. Students **must select 3 to 5 courses** in order of preference.
-   - Step 5: Seat Allotment based on Merit and Category.
-   - Step 6: Fee Payment. Once a seat is allotted, students have a **15-minute window** to initiate the payment.
-4. **Reservation Policy**: GENERAL (40%), OBC (27%), SC (15%), ST (8%), EWS (10%).
-5. **Technical Help**: Supports UPI (Razorpay), Credit Cards, and Net Banking. Installment options are available for selected courses.
+### Core Knowledge Base:
+1. **Admissions Ecosystem**: Covers UG (B.A, B.Sc, B.Com), PG (M.A, M.Sc, M.Com), and Professional courses (B.Tech, BBA, MBA) across all recognized colleges in AP.
+2. **Key Institutions**:
+   - **PRGC (A), Kakinada**: Famous for BSC (IT) with a low fee of ₹11,985.
+   - **Sri Venkateswara University (SVU)**: Top-tier for B.Sc CS (₹35,000) and M.Sc CS (₹45,000).
+   - **Andhra University (AU)**: Offers premium B.Tech programs (₹68,000) and B.Com (₹25,000).
+3. **Mandatory Procedures**:
+   - **DigiLocker**: Absolute requirement. It automatically validates marks and certificates. If a student is stuck, explain that DigiLocker is used for "Instant Eligibility Verification".
+   - **Course Preferences**: Students MUST select a minimum of 3 and up to 5 courses to ensure better allotment chances.
+4. **Important Timelines**:
+   - Seat Allotment is merit-based.
+   - **15-Minute Payment Window**: Crucial! Once a student clicks 'Pay Fee', they must complete the transaction within 15 minutes to secure the seat.
+5. **Reservations**: Strictly follows AP Govt norms (SC/ST/OBC/EWS/General).
 
-### Tone & Style:
-- Professional, concise, and helpful.
-- For eligibility queries, remind them that DigiLocker auto-fetches marks for verification.
-- Always encourage them to complete their profile to see eligible courses.
-- Do not answer off-topic questions. Keep it strictly to admissions and the portal.`;
+### Interaction Guidelines:
+- **Concise & Actionable**: Avoid long paragraphs. Use bullet points for steps.
+- **Supportive Tone**: Use phrases like "I'm here to help you secure your future" or "Great choice of college!".
+- **Security First**: Never ask for passwords. Remind users that OTPs are sent only to their registered mobile/email.
+- **Contextual Awareness**: If a student is in the 'Onboarding' phase, prioritize explaining the DigiLocker and Profile completion steps.`;
 
 // Send message
 router.post('/message', async (req: AuthRequest, res, next) => {
@@ -128,54 +124,80 @@ router.post('/message', async (req: AuthRequest, res, next) => {
         let provider = 'GEMINI';
 
         try {
-            // Priority 1: Gemini (User requested)
-            if (genAI) {
+            // Priority 1: OpenAI (As requested by user)
+            if (openai) {
+                try {
+                    provider = 'CHATGPT';
+                    // Get previous history for context
+                    const history = await prisma.chatHistory.findMany({
+                        where: { userId: req.user!.id },
+                        orderBy: { createdAt: 'desc' },
+                        take: 5
+                    });
+                    const msgs: any[] = history.reverse().map((h: any) => ({
+                        role: h.role === 'user' ? 'user' : 'assistant',
+                        content: h.message
+                    }));
+                    msgs.unshift({ role: 'system', content: systemPrompt });
+
+                    const completion = await openai.chat.completions.create({
+                        model: 'gpt-4o-mini',
+                        messages: [
+                            ...msgs,
+                            { role: 'user', content: message }
+                        ]
+                    });
+                    text = completion.choices[0]?.message?.content || 'Sorry, I could not understand that.';
+                } catch (oaError: any) {
+                    console.error('OpenAI Error:', oaError.message);
+                    if (genAI) {
+                        console.log('Falling back to Gemini...');
+                        // Gemini logic below
+                        provider = 'GEMINI';
+                        const model = genAI.getGenerativeModel({
+                            model: "gemini-2.5-flash",
+                            systemInstruction: systemPrompt
+                        });
+                        const history = await prisma.chatHistory.findMany({
+                            where: { userId: req.user!.id },
+                            orderBy: { createdAt: 'desc' },
+                            take: 6
+                        });
+                        const chat = model.startChat({
+                            history: history.reverse().filter(h => h.message).map(h => ({
+                                role: h.role === 'user' ? 'user' : 'model',
+                                parts: [{ text: h.message }]
+                            }))
+                        });
+                        const result = await chat.sendMessage(message);
+                        const response = await result.response;
+                        text = response.text();
+                    } else {
+                        throw oaError;
+                    }
+                }
+            }
+            // Priority 2: Gemini (If OpenAI not configured)
+            else if (genAI) {
+                provider = 'GEMINI';
                 const model = genAI.getGenerativeModel({
-                    model: "gemini-1.5-flash",
+                    model: "gemini-2.5-flash",
                     systemInstruction: systemPrompt
                 });
-
-                // Get previous history for context
                 const history = await prisma.chatHistory.findMany({
                     where: { userId: req.user!.id },
                     orderBy: { createdAt: 'desc' },
-                    take: 6 // Last 6 messages (3 pairs)
+                    take: 6
                 });
-
                 const chat = model.startChat({
                     history: history.reverse().filter(h => h.message).map(h => ({
                         role: h.role === 'user' ? 'user' : 'model',
                         parts: [{ text: h.message }]
                     }))
                 });
-
                 const result = await chat.sendMessage(message);
                 const response = await result.response;
                 text = response.text();
-            }
-            // Priority 2: OpenAI (Fallback)
-            else if (openai) {
-                provider = 'CHATGPT';
-                // Get previous history for context
-                const history = await prisma.chatHistory.findMany({
-                    where: { userId: req.user!.id },
-                    orderBy: { createdAt: 'desc' },
-                    take: 5
-                });
-                const msgs: any[] = history.reverse().map((h: any) => ({
-                    role: h.role === 'user' ? 'user' : 'assistant',
-                    content: h.message
-                }));
-                msgs.unshift({ role: 'system', content: systemPrompt });
-
-                const completion = await openai.chat.completions.create({
-                    model: 'gpt-4o-mini',
-                    messages: [
-                        ...msgs,
-                        { role: 'user', content: message }
-                    ]
-                });
-                text = completion.choices[0]?.message?.content || 'Sorry, I could not understand that.';
             }
             else {
                 throw new Error('No AI provider available');
