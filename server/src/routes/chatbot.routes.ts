@@ -66,8 +66,8 @@ try {
     const apiKey = process.env.OPENAI_API_KEY;
     if (apiKey && apiKey !== 'mock' && !apiKey.startsWith('sk-proj-YOUR')) {
         openai = new OpenAI({ apiKey });
-    } else {
-        console.log('🤖 AI Chatbot: Using mock responses (No valid OPENAI_API_KEY found)');
+    } else if (process.env.ENV_MODE === 'PRODUCTION') {
+        console.error('❌ AI Chatbot: OPENAI_API_KEY is missing/invalid in production');
     }
 } catch (error) {
     console.error('❌ OpenAI Initialization Error:', error);
@@ -78,8 +78,8 @@ try {
     const geminiKey = process.env.GEMINI_API_KEY;
     if (geminiKey && geminiKey !== 'mock') {
         genAI = new GoogleGenerativeAI(geminiKey);
-    } else {
-        console.log('🤖 AI Chatbot: Gemini not configured (GEMINI_API_KEY is mock or missing)');
+    } else if (process.env.ENV_MODE === 'PRODUCTION') {
+        console.error('❌ AI Chatbot: GEMINI_API_KEY is missing/mock in production');
     }
 } catch (error) {
     console.error('❌ Gemini Initialization Error:', error);

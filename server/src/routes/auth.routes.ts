@@ -56,9 +56,15 @@ router.post('/verify-otp', async (req, res, next) => {
             data: { isVerified: true, otp: null, otpExpiresAt: null }
         });
 
+        const jwtSecret = process.env.JWT_SECRET;
+        if (!jwtSecret) {
+            if (process.env.ENV_MODE === 'PRODUCTION') throw new AppError('JWT_SECRET is not configured', 500);
+            console.warn('⚠️ JWT_SECRET is not configured, using insecure fallback for development');
+        }
+
         const token = jwt.sign(
             { id: user.id, email: user.email, role: user.role, name: user.name },
-            process.env.JWT_SECRET || 'secret',
+            jwtSecret || 'insecure-dev-secret',
             { expiresIn: (process.env.JWT_EXPIRES_IN || '7d') as any }
         );
 
@@ -83,9 +89,15 @@ router.post('/login', async (req, res, next) => {
         const valid = await bcrypt.compare(password, user.password);
         if (!valid) throw new AppError('Wrong password', 401);
 
+        const jwtSecret = process.env.JWT_SECRET;
+        if (!jwtSecret) {
+            if (process.env.ENV_MODE === 'PRODUCTION') throw new AppError('JWT_SECRET is not configured', 500);
+            console.warn('⚠️ JWT_SECRET is not configured, using insecure fallback for development');
+        }
+
         const token = jwt.sign(
             { id: user.id, email: user.email, role: user.role, name: user.name },
-            process.env.JWT_SECRET || 'secret',
+            jwtSecret || 'insecure-dev-secret',
             { expiresIn: (process.env.JWT_EXPIRES_IN || '7d') as any }
         );
 
@@ -184,7 +196,12 @@ router.post('/aadhaar', authenticate, async (req: AuthRequest, res, next) => {
         const { aadhaar } = req.body;
         if (!aadhaar || aadhaar.length !== 12) throw new AppError('Valid 12-digit Aadhaar required');
 
-        const key = process.env.AADHAAR_ENCRYPTION_KEY || 'default-key-32-chars-long!!!!!';
+        const encryptionKey = process.env.AADHAAR_ENCRYPTION_KEY;
+        if (!encryptionKey) {
+            if (process.env.ENV_MODE === 'PRODUCTION') throw new AppError('AADHAAR_ENCRYPTION_KEY is not configured', 500);
+            console.warn('⚠️ AADHAAR_ENCRYPTION_KEY is not configured, using insecure fallback');
+        }
+        const key = encryptionKey || 'default-key-32-chars-long!!!!!';
         const iv = crypto.randomBytes(16);
         const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(key.padEnd(32).slice(0, 32)), iv);
         let encrypted = cipher.update(aadhaar, 'utf8', 'hex');

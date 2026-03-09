@@ -184,6 +184,69 @@ router.post('/courses/:id/reservation', async (req: AuthRequest, res, next) => {
 
 
 
+// Get all applications for the faculty's college
+router.get('/applications', async (req: AuthRequest, res, next) => {
+    try {
+        const profile = await prisma.facultyProfile.findUnique({ where: { userId: req.user!.id } });
+        if (!profile?.collegeId) throw new AppError('No college linked');
+
+        const applications = await prisma.application.findMany({
+            where: { course: { collegeId: profile.collegeId } },
+            include: {
+                student: { include: { user: { select: { name: true, email: true, phone: true } } } },
+                course: true
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+        res.json(applications);
+    } catch (err) { next(err); }
+});
+
+// Update application status
+router.put('/applications/:appId/status', async (req: AuthRequest, res, next) => {
+    try {
+        const { status } = req.body;
+        const validStatuses = ['PENDING', 'ELIGIBLE', 'INELIGIBLE', 'REJECTED'];
+        if (!validStatuses.includes(status)) throw new AppError('Invalid status');
+
+        const profile = await prisma.facultyProfile.findUnique({ where: { userId: req.user!.id } });
+        if (!profile?.collegeId) throw new AppError('No college linked');
+
+        // Verify application belongs to faculty's college
+        const application = await prisma.application.findUnique({
+            where: { id: req.params.appId as string },
+            include: { course: true }
+        });
+        if (!application || application.course.collegeId !== profile.collegeId) {
+            throw new AppError('Application not found or access denied', 404);
+        }
+
+        const updated = await prisma.application.update({
+            where: { id: req.params.appId as string },
+            data: { status }
+        });
+
+        // Create notification for student
+        const student = await prisma.studentProfile.findUnique({ where: { id: application.studentId } });
+        if (student) {
+            await prisma.notification.create({
+                data: {
+                    userId: student.userId,
+                    title: 'Application Status Updated',
+                    message: `Your application for ${application.course.name} has been marked as ${status}.`,
+                    type: status === 'REJECTED' ? 'WARNING' : 'INFO'
+                }
+            });
+        }
+
+        await prisma.auditLog.create({
+            data: { userId: req.user!.id, action: 'UPDATE_APP_STATUS', entity: 'Application', entityId: updated.id, details: JSON.stringify({ status }) }
+        });
+
+        res.json(updated);
+    } catch (err) { next(err); }
+});
+
 // Get full student application detail
 router.get('/applications/:appId/detail', async (req: AuthRequest, res, next) => {
     try {

@@ -110,13 +110,26 @@ export default function FacultyDashboard() {
     };
 
     const updateApplicationStatus = async (appId: string, status: string) => {
-        if (!selectedCourse) return;
         try {
-            await api.put(`/faculty/courses/${selectedCourse.id}/applications/${appId}`, { status });
+            await api.put(`/faculty/applications/${appId}/status`, { status });
             showToast(`Application marked as ${status}`, 'success');
-            loadApplications(selectedCourse.id);
+            if (selectedCourse) loadApplications(selectedCourse.id);
+            if (view === 'applications') loadAllApplications();
         } catch (err: any) { showToast(err.response?.data?.error || 'Failed to update', 'error'); }
     };
+
+    const loadAllApplications = async () => {
+        setLoading(true);
+        try {
+            const { data } = await api.get('/faculty/applications');
+            setApplications(data);
+        } catch { showToast('Failed to load applications', 'error'); }
+        finally { setLoading(false); }
+    };
+
+    useEffect(() => {
+        if (view === 'applications') loadAllApplications();
+    }, [view]);
 
     const linkCollege = async () => {
         if (!linkForm.collegeId || !linkForm.accessCode) return showToast('Please select college and enter access code', 'warning');
@@ -155,6 +168,7 @@ export default function FacultyDashboard() {
     const menu = [
         { icon: '📊', label: 'Dashboard', key: 'dashboard' },
         { icon: '📚', label: 'Courses', key: 'courses' },
+        { icon: '📝', label: 'Applications', key: 'applications' },
         { icon: '⚖️', label: 'Reservation', key: 'reservation' },
         { icon: '🎯', label: 'Seat Matrix', key: 'seatmatrix' },
         { icon: '📈', label: 'Analytics', key: 'analytics' },
@@ -428,7 +442,67 @@ export default function FacultyDashboard() {
 
 
 
-                {/* Analytics */}
+                {/* Applications View */}
+                {profile?.collegeId && view === 'applications' && (
+                    <div className="animate-fade">
+                        <div className="page-header">
+                            <h1>📝 Student Applications</h1>
+                            <p>Manage all student applications for {profile?.college?.name}</p>
+                        </div>
+                        <div className="card">
+                            {applications.length > 0 ? (
+                                <div className="table-container">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Student</th>
+                                                <th>Course</th>
+                                                <th>Marks</th>
+                                                <th>Status</th>
+                                                <th>Applied At</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {applications.map((a: any) => (
+                                                <tr key={a.id}>
+                                                    <td>
+                                                        <div style={{ fontWeight: 600 }}>{a.student?.user?.name}</div>
+                                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{a.student?.user?.email}</div>
+                                                    </td>
+                                                    <td>{a.course?.name}</td>
+                                                    <td>{a.appliedMarks}%</td>
+                                                    <td>
+                                                        <span className={`badge ${a.status === 'ELIGIBLE' ? 'badge-info' : a.status === 'REJECTED' ? 'badge-danger' : a.status === 'ALLOTTED' ? 'badge-success' : 'badge-default'}`}>
+                                                            {a.status}
+                                                        </span>
+                                                    </td>
+                                                    <td style={{ fontSize: '0.8rem' }}>{new Date(a.createdAt).toLocaleDateString()}</td>
+                                                    <td>
+                                                        <div className="flex gap-sm">
+                                                            <button className="btn btn-info btn-sm" onClick={() => viewApplication(a.id)}>👁 View</button>
+                                                            {(a.status === 'PENDING' || a.status === 'ELIGIBLE') && (
+                                                                <>
+                                                                    <button className="btn btn-success btn-sm" title="Approve" onClick={() => updateApplicationStatus(a.id, 'ELIGIBLE')}>✓</button>
+                                                                    <button className="btn btn-danger btn-sm" title="Reject" onClick={() => updateApplicationStatus(a.id, 'REJECTED')}>✕</button>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ) : (
+                                <div className="empty-state">
+                                    <div className="icon">📝</div>
+                                    <p>No applications found for your college.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
                 {profile?.collegeId && view === 'analytics' && (
                     <div className="animate-fade">
                         <div className="page-header"><h1>📈 Analytics</h1><p>Student application analytics for your college</p></div>

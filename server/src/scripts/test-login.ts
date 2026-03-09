@@ -5,7 +5,7 @@ import path from 'path';
 async function testLogin() {
     console.log('Current CWD:', process.cwd());
     console.log('Test file path:', __filename);
-    const baseUrl = 'http://localhost:5000/api';
+    const baseUrl = 'http://localhost:5001/api';
     const credentials = [
         { email: 'admin@nap.gov.in', password: 'Test@123' },
         { email: 'faculty1@nap.gov.in', password: 'Test@123' },
