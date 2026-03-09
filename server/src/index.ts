@@ -16,6 +16,7 @@ import adminRoutes from './routes/admin.routes';
 import digilockerRoutes from './routes/digilocker.routes';
 import paymentRoutes from './routes/payment.routes';
 import chatbotRoutes from './routes/chatbot.routes';
+import notificationRoutes from './routes/notification.routes';
 import { errorHandler } from './middleware/errorHandler';
 
 const app = express();
@@ -46,6 +47,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/digilocker', digilockerRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/chatbot', chatbotRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {

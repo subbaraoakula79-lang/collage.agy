@@ -31,27 +31,6 @@ router.get('/onboarding-status', async (req: AuthRequest, res, next) => {
     } catch (err) { next(err); }
 });
 
-// Get notifications
-router.get('/notifications', async (req: AuthRequest, res, next) => {
-    try {
-        const notifications = await prisma.notification.findMany({
-            where: { userId: req.user!.id },
-            orderBy: { createdAt: 'desc' }, take: 50
-        });
-        res.json(notifications);
-    } catch (err) { next(err); }
-});
-
-// Mark all as read
-router.post('/notifications/read', async (req: AuthRequest, res, next) => {
-    try {
-        await prisma.notification.updateMany({
-            where: { userId: req.user!.id, isRead: false },
-            data: { isRead: true }
-        });
-        res.json({ success: true });
-    } catch (err) { next(err); }
-});
 
 // Set admission type (onboarding step 1)
 router.post('/set-admission-type', async (req: AuthRequest, res, next) => {

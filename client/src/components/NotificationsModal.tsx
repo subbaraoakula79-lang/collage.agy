@@ -14,11 +14,11 @@ export default function NotificationsModal({ onClose }: { onClose: () => void })
     const [notifications, setNotifications] = useState<Notification[]>([]);
 
     useEffect(() => {
-        api.get('/student/notifications').then(res => setNotifications(res.data));
+        api.get('/notifications').then(res => setNotifications(res.data));
     }, []);
 
     const markAllAsRead = () => {
-        api.post('/student/notifications/read').then(() => {
+        api.post('/notifications/read-all').then(() => {
             setNotifications(notifications.map(n => ({ ...n, isRead: true })));
         });
     };

@@ -6,10 +6,11 @@ import api from '../api';
 export default function LoginPage() {
     const { setUser, showToast } = useContext(AppContext);
     const nav = useNavigate();
-    const [email, setEmail] = useState('');
+    const [email, setEmail] = useState(localStorage.getItem('rememberedEmail') || '');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [rememberMe, setRememberMe] = useState(!!localStorage.getItem('rememberedEmail'));
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -17,6 +18,13 @@ export default function LoginPage() {
         try {
             const { data } = await api.post('/auth/login', { email, password });
             localStorage.setItem('token', data.token);
+
+            if (rememberMe) {
+                localStorage.setItem('rememberedEmail', email);
+            } else {
+                localStorage.removeItem('rememberedEmail');
+            }
+
             setUser(data.user);
             showToast(`Welcome back, ${data.user.name}!`, 'success');
 
@@ -29,6 +37,11 @@ export default function LoginPage() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const quickLogin = (e: string, p: string) => {
+        setEmail(e);
+        setPassword(p);
     };
 
     return (
@@ -71,6 +84,16 @@ export default function LoginPage() {
                             </button>
                         </div>
                     </div>
+                    <div className="remember-me-container">
+                        <label className="checkbox-label">
+                            <input
+                                type="checkbox"
+                                checked={rememberMe}
+                                onChange={e => setRememberMe(e.target.checked)}
+                            />
+                            <span>Remember me</span>
+                        </label>
+                    </div>
 
                     <button type="submit" className="btn btn-primary btn-block btn-lg" disabled={loading}>
                         {loading ? '⏳ Signing in...' : '🔐 Sign In'}
@@ -78,22 +101,30 @@ export default function LoginPage() {
                 </form>
 
                 <div className="auth-links">
-                    Don't have an account? <Link to="/register">Register Free</Link>
+                    Don't have an account? <Link to="/register" style={{ fontWeight: '600', color: 'var(--primary-light)' }}>Register Free</Link>
                 </div>
 
-                <div style={{ marginTop: '24px', padding: '16px', background: 'var(--bg-glass)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '8px' }}>
-                        🧪 Test Credentials (Password: Test@123)
-                    </p>
-                    <div style={{ display: 'grid', gap: '4px', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                        <span onClick={() => { setEmail('admin@nap.gov.in'); setPassword('Test@123'); }} style={{ cursor: 'pointer' }}>👨‍💼 Admin: admin@nap.gov.in</span>
-                        <span onClick={() => { setEmail('faculty1@nap.gov.in'); setPassword('Test@123'); }} style={{ cursor: 'pointer' }}>🏫 College Admin: faculty1@nap.gov.in</span>
-                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                            <span onClick={() => { setEmail('student1@nap.gov.in'); setPassword('Test@123'); }} style={{ cursor: 'pointer' }}>🎓 Student 1 (UG)</span>
-                            <span onClick={() => { setEmail('student2@nap.gov.in'); setPassword('Test@123'); }} style={{ cursor: 'pointer' }}>🎓 Student 2 (UG)</span>
-                            <span onClick={() => { setEmail('student3@nap.gov.in'); setPassword('Test@123'); }} style={{ cursor: 'pointer' }}>🎓 Student 3 (PG)</span>
-                            <span onClick={() => { setEmail('student4@nap.gov.in'); setPassword('Test@123'); }} style={{ cursor: 'pointer' }}>🎓 Student 4 (PG)</span>
-                        </div>
+                <div className="quick-login-section">
+                    <div className="quick-login-title">
+                        <span>🧪 Quick Access (Development)</span>
+                    </div>
+                    <div className="quick-login-grid">
+                        <button className="quick-login-btn" onClick={() => quickLogin('admin@nap.gov.in', 'Test@123')}>
+                            <span className="quick-login-role">👨‍💼 Admin</span>
+                            <span className="quick-login-email">admin@nap.gov.in</span>
+                        </button>
+                        <button className="quick-login-btn" onClick={() => quickLogin('faculty1@nap.gov.in', 'Test@123')}>
+                            <span className="quick-login-role">🏫 Faculty</span>
+                            <span className="quick-login-email">faculty1@nap...</span>
+                        </button>
+                        <button className="quick-login-btn" onClick={() => quickLogin('student1@nap.gov.in', 'Test@123')}>
+                            <span className="quick-login-role">🎓 Student (UG)</span>
+                            <span className="quick-login-email">student1@nap...</span>
+                        </button>
+                        <button className="quick-login-btn" onClick={() => quickLogin('student3@nap.gov.in', 'Test@123')}>
+                            <span className="quick-login-role">🎓 Student (PG)</span>
+                            <span className="quick-login-email">student3@nap...</span>
+                        </button>
                     </div>
                 </div>
             </div>
