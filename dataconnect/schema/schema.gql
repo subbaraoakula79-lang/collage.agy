@@ -1,52 +1,250 @@
-# Example schema for simple movie review app
+# National Admission Portal - Data Connect Schema
 
-# User table is keyed by Firebase Auth UID.
+# User Model
 type User @table {
-  # `@default(expr: "auth.uid")` sets it to Firebase Auth UID during insert and upsert.
-  id: String! @default(expr: "auth.uid")
-  username: String! @col(dataType: "varchar(50)")
-  # The `user: User!` field in the Review table generates the following one-to-many query field.
-  #  reviews_on_user: [Review!]!
-  # The `Review` join table the following many-to-many query field.
-  #  movies_via_Review: [Movie!]!
+  id: UUID! @default(expr: "uuidV4()")
+  name: String!
+  email: String! @unique
+  password: String!
+  role: String! @default(value: "STUDENT")
+  phone: String
+  isVerified: Boolean! @default(value: false)
+  otp: String
+  otpExpiresAt: Timestamp
+  createdAt: Timestamp! @default(expr: "request.time")
 }
 
-# Movie is keyed by a randomly generated UUID.
-type Movie @table {
-  # If you do not pass a 'key' to `@table`, Data Connect automatically adds the following 'id' column.
-  # Feel free to uncomment and customize it.
-  #  id: UUID! @default(expr: "uuidV4()")
+# Student Profile
+type StudentProfile @table(key: ["userId"]) {
+  userId: UUID!
+  user: User! @ref(fields: ["userId"])
+  
+  admissionType: String
+  onboardingStep: String! @default(value: "REGISTERED")
+  
+  # Personal Details
+  gender: String
+  dateOfBirth: String
+  category: String
+  state: String @default(value: "Andhra Pradesh")
+  houseNo: String
+  street: String
+  village: String
+  mandal: String
+  district: String
+  pincode: String
+  address: String
+  
+  # Parent Details
+  fatherName: String
+  motherName: String
+  parentMobile: String
+  parentOccupation: String
+  annualIncome: Float
+  
+  # Reservations
+  minority: Boolean! @default(value: false)
+  physicallyHandicapped: Boolean! @default(value: false)
+  sportsQuota: Boolean! @default(value: false)
+  
+  # Academic Details
+  sscHallTicket: String
+  sscBoard: String
+  sscYearOfPassing: String
+  sscMarks: Float
+  sscTotal: Float
+  sscPercentage: Float
+  sscGrade: String
+  
+  interHallTicket: String
+  interBoard: String
+  interGroup: String
+  interYearOfPassing: String
+  interMarks: Float
+  interTotal: Float
+  interPercentage: Float
+  
+  ugMarks: Float
+  ugTotal: Float
+  ugPercentage: Float
+  
+  # Document URLs
+  sscCertUrl: String
+  interCertUrl: String
+  ugCertUrl: String
+  casteCertUrl: String
+  incomeCertUrl: String
+  disabilityCertUrl: String
+  sportsCertUrl: String
+  
+  # Status
+  sscDocStatus: String @default(value: "NOT_SUBMITTED")
+  interDocStatus: String @default(value: "NOT_SUBMITTED")
+  ugDocStatus: String @default(value: "NOT_SUBMITTED")
+  casteDocStatus: String @default(value: "NOT_SUBMITTED")
+  incomeDocStatus: String @default(value: "NOT_SUBMITTED")
+  
+  digilockerToken: String
+  digilockerVerified: Boolean! @default(value: false)
+  
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
+}
+
+# Faculty Profile
+type FacultyProfile @table(key: ["userId"]) {
+  userId: UUID!
+  user: User! @ref(fields: ["userId"])
+  collegeId: UUID
+  college: College
+  department: String
+  designation: String
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+# College
+type College @table {
+  id: UUID! @default(expr: "uuidV4()")
+  name: String!
+  code: String! @unique
+  accessCode: String! @default(value: "86390")
+  address: String
+  state: String! @default(value: "Andhra Pradesh")
+  city: String
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+# Course
+type Course @table {
+  id: UUID! @default(expr: "uuidV4()")
+  name: String!
+  code: String!
+  collegeId: UUID!
+  college: College! @ref(fields: ["collegeId"])
+  admissionType: String!
+  admissionMode: String! @default(value: "MERIT")
+  totalSeats: Int!
+  eligibilityPercentage: Float! @default(value: 0)
+  tuitionFee: Float! @default(value: 0)
+  labFee: Float! @default(value: 0)
+  libraryFee: Float! @default(value: 0)
+  otherFee: Float! @default(value: 0)
+  totalFee: Float! @default(value: 0)
+  installmentEnabled: Boolean! @default(value: false)
+  scholarshipEnabled: Boolean! @default(value: false)
+  unfilledSeatRule: String! @default(value: "CONVERT_TO_GENERAL")
+  isActive: Boolean! @default(value: true)
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+# Reservation Matrix
+type ReservationMatrix @table(key: ["courseId", "category"]) {
+  courseId: UUID!
+  course: Course! @ref(fields: ["courseId"])
+  category: String!
+  percentage: Float!
+  seats: Int!
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+# Application
+type Application @table(key: ["studentUserId", "courseId"]) {
+  studentUserId: UUID!
+  student: StudentProfile! @ref(fields: ["studentUserId"])
+  courseId: UUID!
+  course: Course! @ref(fields: ["courseId"])
+  admissionType: String!
+  status: String! @default(value: "PENDING")
+  appliedMarks: Float
+  preference: Int! @default(value: 1)
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+# Round
+type Round @table(key: ["courseId", "roundNumber"]) {
+  id: UUID! @default(expr: "uuidV4()")
+  courseId: UUID!
+  course: Course! @ref(fields: ["courseId"])
+  roundNumber: Int!
+  status: String! @default(value: "PENDING")
+  isPublished: Boolean! @default(value: false)
+  startedAt: Timestamp
+  completedAt: Timestamp
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+# Allotment
+type Allotment @table {
+  id: UUID! @default(expr: "uuidV4()")
+  studentUserId: UUID!
+  student: StudentProfile! @ref(fields: ["studentUserId"])
+  courseId: UUID!
+  course: Course! @ref(fields: ["courseId"])
+  roundNumber: Int!
+  round: Round! @ref(fields: ["courseId", "roundNumber"])
+  category: String!
+  status: String! @default(value: "ALLOTTED")
+  seatLocked: Boolean! @default(value: false)
+  seatLockedAt: Timestamp
+  seatExpiresAt: Timestamp
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+# Payment
+type Payment @table {
+  id: UUID! @default(expr: "uuidV4()")
+  studentUserId: UUID!
+  student: StudentProfile! @ref(fields: ["studentUserId"])
+  allotmentId: UUID
+  amount: Float!
+  method: String
+  gateway: String! @default(value: "RAZORPAY")
+  transactionId: String
+  gatewayPaymentId: String
+  gatewaySignature: String
+  status: String! @default(value: "PENDING")
+  isInstallment: Boolean! @default(value: false)
+  installmentNumber: Int
+  paidAt: Timestamp
+  receiptUrl: String
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+# DigiLocker Session
+type DigiLockerSession @table {
+  id: UUID! @default(expr: "uuidV4()")
+  userId: UUID!
+  mobile: String!
+  maskedName: String
+  pinAttempts: Int! @default(value: 0)
+  pinVerified: Boolean! @default(value: false)
+  otpSent: Boolean! @default(value: false)
+  otpVerified: Boolean! @default(value: false)
+  token: String
+  status: String! @default(value: "INITIATED")
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+# Chat History
+type ChatHistory @table {
+  id: UUID! @default(expr: "uuidV4()")
+  userId: UUID!
+  user: User! @ref(fields: ["userId"])
+  role: String!
+  message: String!
+  provider: String
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+# Notification
+type Notification @table {
+  id: UUID! @default(expr: "uuidV4()")
+  userId: UUID!
+  user: User! @ref(fields: ["userId"])
   title: String!
-  imageUrl: String!
-  genre: String
-}
-
-# MovieMetadata is a metadata attached to a Movie.
-# Movie <-> MovieMetadata is a one-to-one relationship
-type MovieMetadata @table {
-  # @unique ensures each Movie can only one MovieMetadata.
-  movie: Movie! @unique
-  # The movie field adds the following foreign key field. Feel free to uncomment and customize it.
-  #  movieId: UUID!
-  rating: Float
-  releaseYear: Int
-  description: String
-}
-
-# Reviews is a join table between User and Movie.
-# It has a composite primary keys `userUid` and `movieId`.
-# A user can leave reviews for many movies. A movie can have reviews from many users.
-# User  <-> Review is a one-to-many relationship
-# Movie <-> Review is a one-to-many relationship
-# Movie <-> User is a many-to-many relationship
-type Review @table(name: "Reviews", key: ["movie", "user"]) {
-  user: User!
-  # The user field adds the following foreign key field. Feel free to uncomment and customize it.
-  #  userUid: String!
-  movie: Movie!
-  # The movie field adds the following foreign key field. Feel free to uncomment and customize it.
-  #  movieId: UUID!
-  rating: Int
-  reviewText: String
-  reviewDate: Date! @default(expr: "request.time")
+  message: String!
+  type: String! @default(value: "INFO")
+  isRead: Boolean! @default(value: false)
+  link: String
+  createdAt: Timestamp! @default(expr: "request.time")
 }

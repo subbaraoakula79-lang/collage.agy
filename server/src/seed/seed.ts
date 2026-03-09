@@ -102,6 +102,15 @@ async function main() {
         }
     });
 
+    const maEnglish = await prisma.course.create({
+        data: {
+            name: 'M.A. English Literature', code: 'MA-ENG', collegeId: college2.id,
+            admissionType: 'PG', admissionMode: 'MERIT', totalSeats: 40,
+            eligibilityPercentage: 45, tuitionFee: 15000, labFee: 0, libraryFee: 2000, otherFee: 3000, totalFee: 20000,
+            installmentEnabled: false, scholarshipEnabled: true
+        }
+    });
+
     const btechECE = await prisma.course.create({
         data: {
             name: 'B.Tech Electronics', code: 'BTECH-ECE', collegeId: college2.id,
@@ -121,7 +130,7 @@ async function main() {
     });
 
     // Set reservation matrix for each course
-    const courses = [bscCS, bcom, bba, mscCS, mba, btechECE, btechCSE];
+    const courses = [bscCS, bcom, bba, mscCS, mba, maEnglish, btechECE, btechCSE];
     const reservations = [
         { category: 'GENERAL', percentage: 40 },
         { category: 'OBC', percentage: 27 },

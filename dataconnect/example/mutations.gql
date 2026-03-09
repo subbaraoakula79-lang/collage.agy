@@ -1,33 +1,26 @@
-# Example mutations for a simple movie app
+# Admission Portal Mutations
 
-# Create a movie based on user input
-mutation CreateMovie($title: String!, $genre: String!, $imageUrl: String!)
-@auth(level: USER_EMAIL_VERIFIED, insecureReason: "Any email verified users can create a new movie.") {
-  movie_insert(data: { title: $title, genre: $genre, imageUrl: $imageUrl })
+# Update student onboarding status
+mutation UpdateOnboardingStep($userId: UUID!, $step: String!) @auth(level: USER) {
+  studentProfile_update(key: { userId: $userId }, data: { onboardingStep: $step })
 }
 
-# Upsert (update or insert) a user's username based on their auth.uid
-mutation UpsertUser($username: String!) @auth(level: USER) {
-  # The "auth.uid" server value ensures that users can only register their own user.
-  user_upsert(data: { id_expr: "auth.uid", username: $username })
+# Create a new application
+mutation CreateApplication($studentId: UUID!, $courseId: UUID!, $admissionType: String!) @auth(level: USER) {
+  application_insert(data: {
+    studentUserId: $studentId,
+    courseId: $courseId,
+    admissionType: $admissionType,
+    status: "PENDING"
+  })
 }
 
-# Add a review for a movie
-mutation AddReview($movieId: UUID!, $rating: Int!, $reviewText: String!)
-@auth(level: USER) {
-  review_upsert(
-    data: {
-      userId_expr: "auth.uid"
-      movieId: $movieId
-      rating: $rating
-      reviewText: $reviewText
-      # reviewDate defaults to today in the schema. No need to set it manually.
-    }
-  )
-}
-
-# Logged in user can delete their review for a movie
-mutation DeleteReview($movieId: UUID!) @auth(level: USER) {
-  # The "auth.uid" server value ensures that users can only delete their own reviews.
-  review_delete(key: { userId_expr: "auth.uid", movieId: $movieId })
+# Add a notification
+mutation AddNotification($userId: UUID!, $title: String!, $message: String!, $type: String!) @auth(level: NO_ACCESS) {
+  notification_insert(data: {
+    userId: $userId,
+    title: $title,
+    message: $message,
+    type: $type
+  })
 }
