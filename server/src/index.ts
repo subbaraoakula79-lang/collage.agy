@@ -20,7 +20,7 @@ import notificationRoutes from './routes/notification.routes';
 import { errorHandler } from './middleware/errorHandler';
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PREFERRED_PORT = parseInt(process.env.PORT || '5001', 10);
 
 // Security middleware
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
@@ -57,9 +57,25 @@ app.get('/api/health', (_req, res) => {
 // Error handler
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
-    console.log(`📦 Mode: ${process.env.ENV_MODE || 'MOCK_AP'}`);
-});
+// Start server with automatic port fallback
+function startServer(port: number, maxRetries = 5): void {
+    const server = app.listen(port, () => {
+        console.log(`🚀 Server running on http://localhost:${port}`);
+        console.log(`📦 Mode: ${process.env.ENV_MODE || 'MOCK_AP'}`);
+    });
+
+    server.on('error', (err: NodeJS.ErrnoException) => {
+        if (err.code === 'EADDRINUSE' && maxRetries > 0) {
+            console.warn(`⚠️  Port ${port} is in use, trying ${port + 1}...`);
+            server.close();
+            startServer(port + 1, maxRetries - 1);
+        } else {
+            console.error(`❌ Failed to start server:`, err.message);
+            process.exit(1);
+        }
+    });
+}
+
+startServer(PREFERRED_PORT);
 
 export default app;
