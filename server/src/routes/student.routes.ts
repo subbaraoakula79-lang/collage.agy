@@ -22,11 +22,23 @@ router.get('/profile', async (req: AuthRequest, res, next) => {
 // Get onboarding status
 router.get('/onboarding-status', async (req: AuthRequest, res, next) => {
     try {
-        const profile = await prisma.studentProfile.findUnique({
+        let profile = await prisma.studentProfile.findUnique({
             where: { userId: req.user!.id },
             include: { user: { select: { name: true, email: true, phone: true } } }
         });
         if (!profile) throw new AppError('Profile not found', 404);
+
+        // Auto-fix: If they already have applications, they should be marked as COMPLETE
+        if (profile.onboardingStep !== 'COMPLETE') {
+            const appCount = await prisma.application.count({ where: { studentId: profile.id } });
+            if (appCount > 0) {
+                profile = await prisma.studentProfile.update({
+                    where: { id: profile.id },
+                    data: { onboardingStep: 'COMPLETE' },
+                    include: { user: { select: { name: true, email: true, phone: true } } }
+                });
+            }
+        }
         res.json(profile);
     } catch (err) { next(err); }
 });
