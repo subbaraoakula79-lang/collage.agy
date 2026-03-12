@@ -744,10 +744,6 @@ export default function StudentDashboard() {
                 <PaymentModal
                     allotment={paymentAllotment}
                     onClose={() => setPaymentAllotment(null)}
-                    onSuccess={() => {
-                        showToast('Payment confirmed!', 'success');
-                        loadData();
-                    }}
                 />
             )}
 

@@ -7,6 +7,8 @@ import StudentDashboard from './pages/StudentDashboard';
 import FacultyDashboard from './pages/FacultyDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import PaymentSuccess from './pages/student/PaymentSuccess';
+import PaymentCancel from './pages/student/PaymentCancel';
 import Toast from './components/Toast';
 
 interface User {
@@ -90,7 +92,11 @@ export default function App() {
 
                     <Route path="/student/*" element={
                         <ProtectedRoute roles={['STUDENT']}>
-                            <StudentDashboard />
+                            <Routes>
+                                <Route path="/" element={<StudentDashboard />} />
+                                <Route path="/payment-success" element={<PaymentSuccess />} />
+                                <Route path="/payment-cancel" element={<PaymentCancel />} />
+                            </Routes>
                         </ProtectedRoute>
                     } />
 
@@ -105,6 +111,9 @@ export default function App() {
                             <AdminDashboard />
                         </ProtectedRoute>
                     } />
+
+                    <Route path="/payment-success" element={<ProtectedRoute roles={['STUDENT']}><PaymentSuccess /></ProtectedRoute>} />
+                    <Route path="/payment-cancel" element={<ProtectedRoute roles={['STUDENT']}><PaymentCancel /></ProtectedRoute>} />
 
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
