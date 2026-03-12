@@ -201,6 +201,7 @@ export default function AdminDashboard() {
                         <div className="page-header"><h1>Admin Dashboard</h1><p>System overview and analytics</p></div>
                         <div className="stats-grid">
                             <div className="stat-card"><div className="stat-icon purple">👥</div><div className="stat-value">{stats.totalStudents}</div><div className="stat-label">Students</div></div>
+                            <div className="stat-card"><div className="stat-icon blue" style={{ background: 'rgba(59, 130, 246, 0.2)' }}>🏢</div><div className="stat-value">{stats.totalColleges || 0}</div><div className="stat-label">Colleges</div></div>
                             <div className="stat-card"><div className="stat-icon cyan">🏫</div><div className="stat-value">{stats.totalFaculty}</div><div className="stat-label">College Admins</div></div>
                             <div className="stat-card"><div className="stat-icon amber">📚</div><div className="stat-value">{stats.totalCourses}</div><div className="stat-label">Courses</div></div>
                             <div className="stat-card"><div className="stat-icon green">📝</div><div className="stat-value">{stats.totalApplications}</div><div className="stat-label">Applications</div></div>

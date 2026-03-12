@@ -11,13 +11,14 @@ router.use(authorize('ADMIN'));
 // Dashboard stats
 router.get('/dashboard', async (_req: AuthRequest, res, next) => {
     try {
-        const [totalStudents, totalFaculty, totalCourses, totalApplications, totalPayments, totalAllotments] = await Promise.all([
+        const [totalStudents, totalFaculty, totalCourses, totalApplications, totalPayments, totalAllotments, totalColleges] = await Promise.all([
             prisma.user.count({ where: { role: 'STUDENT' } }),
             prisma.user.count({ where: { role: 'FACULTY' } }),
             prisma.course.count(),
             prisma.application.count(),
             prisma.payment.count({ where: { status: 'SUCCESS' } }),
-            prisma.allotment.count({ where: { status: { in: ['ACCEPTED', 'FROZEN'] } } })
+            prisma.allotment.count({ where: { status: { in: ['ACCEPTED', 'FROZEN'] } } }),
+            prisma.college.count()
         ]);
 
         const revenue = await prisma.payment.aggregate({
@@ -27,7 +28,8 @@ router.get('/dashboard', async (_req: AuthRequest, res, next) => {
 
         res.json({
             totalStudents, totalFaculty, totalCourses, totalApplications,
-            totalPayments, totalAllotments, totalRevenue: revenue._sum.amount || 0
+            totalPayments, totalAllotments, totalRevenue: revenue._sum.amount || 0,
+            totalColleges
         });
     } catch (err) { next(err); }
 });

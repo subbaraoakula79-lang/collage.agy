@@ -9,6 +9,7 @@ async function main() {
     // Clear existing data
     await prisma.chatHistory.deleteMany();
     await prisma.auditLog.deleteMany();
+    await prisma.notification.deleteMany();
     await prisma.payment.deleteMany();
     await prisma.refund.deleteMany();
     await prisma.allotment.deleteMany();
