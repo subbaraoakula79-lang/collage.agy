@@ -11,15 +11,28 @@ export async function runMeritAllocation(course: any, round: any) {
         orderBy: { appliedMarks: 'desc' }
     });
 
-    // Track already allotted in this round
+    // Track already allotted globally across all courses
     const allotted: string[] = [];
     const allotments: any[] = [];
 
-    // Check for frozen students (they keep their seats)
+    // Find ALL globally active allotments across the entire system
+    const globallyActiveAllotments = await prisma.allotment.findMany({
+        where: {
+            status: { in: ['ALLOTTED', 'ACCEPTED', 'FROZEN'] },
+        }
+    });
+
+    globallyActiveAllotments.forEach((a: any) => {
+        if (!allotted.includes(a.studentId)) {
+            allotted.push(a.studentId);
+        }
+    });
+
+    // Check for frozen students in this specific course (they keep their seats)
     const frozenAllotments = await prisma.allotment.findMany({
         where: { courseId: course.id, status: 'FROZEN' }
     });
-    frozenAllotments.forEach((a: any) => allotted.push(a.studentId));
+    // frozenAllotments are already in the globallyActiveAllotments array, so their studentId is in `allotted`.
 
     // Step 1: Fill General seats
     const generalRes = reservations.find((r: any) => r.category === 'GENERAL');

@@ -360,13 +360,32 @@ router.post('/rounds/:courseId/publish', async (req: AuthRequest, res, next) => 
                 include: { student: true, course: { include: { college: true } } }
             });
 
+            // Fetch ALL applications for this course to see who was not allotted
+            const applications = await prisma.application.findMany({
+                where: { courseId: req.params.courseId as string },
+                include: { student: true, course: { include: { college: true } } }
+            });
+
+            const allottedStudentIds = allotments.map((a: any) => a.studentId);
+            const notAllottedApplications = applications.filter(app => !allottedStudentIds.includes(app.studentId));
+
             const rp = await import('../lib/notifications');
             for (const a of allotments) {
                 await rp.sendNotification({
                     userId: a.student.userId,
                     title: 'Allotment Results Published!',
-                    message: `Congratulations! You have been allotted a seat in ${a.course.name} at ${a.course.college.name}. Please visit the Seat Allotments section to accept or freeze your seat.`,
+                    message: `Congratulations! You have been allotted a seat in ${a.course.name} at ${a.course.college.name}. Tuition Fee: ₹${a.course.tuitionFee}, Total Fee: ₹${a.course.totalFee}. Please visit the Seat Allotments section to accept or freeze your seat.`,
                     type: 'ALLOTMENT',
+                    link: '/allotments'
+                });
+            }
+
+            for (const app of notAllottedApplications) {
+                await rp.sendNotification({
+                    userId: app.student.userId,
+                    title: 'Allotment Results Published',
+                    message: `We regret to inform you that you have not been allotted a seat in ${app.course.name} at ${app.course.college.name} in this round.`,
+                    type: 'INFO',
                     link: '/allotments'
                 });
             }
@@ -381,16 +400,35 @@ router.post('/rounds/:courseId/publish', async (req: AuthRequest, res, next) => 
 
         const allotments = await prisma.allotment.findMany({
             where: { roundId: round.id, status: 'ALLOTTED' },
-            include: { student: true, course: true }
+            include: { student: true, course: { include: { college: true } } }
         });
+
+        // Fetch ALL applications for this course to see who was not allotted
+        const applications = await prisma.application.findMany({
+            where: { courseId: req.params.courseId as string },
+            include: { student: true, course: { include: { college: true } } }
+        });
+
+        const allottedStudentIds = allotments.map((a: any) => a.studentId);
+        const notAllottedApplications = applications.filter(app => !allottedStudentIds.includes(app.studentId));
 
         const rp = await import('../lib/notifications');
         for (const a of allotments) {
             await rp.sendNotification({
                 userId: a.student.userId,
                 title: 'Allotment Results Published!',
-                message: `Congratulations! You have been allotted a seat in ${a.course.name} (Round ${round.roundNumber}). Please accept or freeze your seat.`,
+                message: `Congratulations! You have been allotted a seat in ${a.course.name} at ${a.course.college.name} (Round ${round.roundNumber}). Tuition Fee: ₹${a.course.tuitionFee}, Total Fee: ₹${a.course.totalFee}. Please accept or freeze your seat.`,
                 type: 'ALLOTMENT',
+                link: '/allotments'
+            });
+        }
+
+        for (const app of notAllottedApplications) {
+            await rp.sendNotification({
+                userId: app.student.userId,
+                title: 'Allotment Results Published',
+                message: `We regret to inform you that you have not been allotted a seat in ${app.course.name} at ${app.course.college.name} in Round ${round.roundNumber}.`,
+                type: 'INFO',
                 link: '/allotments'
             });
         }
